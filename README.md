@@ -1,4 +1,4 @@
-# Stay Event - Plataforma de Gestión de Entradas 
+# Stay Event - Plataforma de Venta y Gestión de Entradas 
 
 ### [🚀] Descripción
 Proyecto desarrollado para el 9no ciclo de Ingeniería de Software. "Stay Event" es una solución web para la compra y venta de entradas a eventos, enfocada en la autogestión y seguridad mediante códigos QR.
