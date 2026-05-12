@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 
 const RUTA_POR_ROL = {
     admin: '/admin',
-    usuario: '/usuario',
+    usuario: '/',
     organizador: '/organizador',
 };
 

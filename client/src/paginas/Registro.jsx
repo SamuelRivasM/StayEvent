@@ -5,7 +5,7 @@ import api from '../servicios/api';
 
 const RUTA_POR_ROL = {
     admin: '/admin',
-    usuario: '/usuario',
+    usuario: '/',
     organizador: '/organizador',
 };
 
@@ -160,7 +160,7 @@ const Registro = () => {
 
                 {/* Logo superior */}
                 <div className="relative z-10">
-                    <span className="text-white text-xl font-bold tracking-tight">Stay Event</span>
+                    <Link to="/" className="text-white text-xl font-bold tracking-tight hover:text-purple-200 transition-colors">Stay Event</Link>
                 </div>
 
                 {/* Texto inferior */}
@@ -180,7 +180,7 @@ const Registro = () => {
 
                     {/* Logo solo en mobile */}
                     <div className="lg:hidden mb-8 text-center">
-                        <span className="text-2xl font-bold text-gray-900">Stay Event</span>
+                        <Link to="/" className="text-2xl font-bold text-gray-900 hover:text-purple-600 transition-colors">Stay Event</Link>
                     </div>
 
                     {/* Encabezado */}
@@ -365,13 +365,10 @@ const Registro = () => {
                             type="submit"
                             disabled={cargando}
                             className="w-full py-3 px-4 rounded-xl font-semibold text-sm text-white
-                                       bg-gradient-to-r from-purple-600 to-indigo-600
-                                       hover:from-purple-700 hover:to-indigo-700
-                                       disabled:from-purple-400 disabled:to-indigo-400
-                                       shadow-lg shadow-purple-200 hover:shadow-purple-300
-                                       hover:-translate-y-0.5 active:translate-y-0
-                                       disabled:shadow-none disabled:cursor-not-allowed
-                                       transition-all duration-200"
+                                bg-gradient-to-r from-purple-600 to-violet-700
+                                hover:from-purple-700 hover:to-violet-800
+                                hover:-translate-y-0.5 active:translate-y-0
+                                transition-all duration-200"
                         >
                             {cargando ? 'Creando cuenta...' : 'Crear Cuenta'}
                         </button>

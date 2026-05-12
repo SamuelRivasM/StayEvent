@@ -15,10 +15,10 @@ const pool = mysql.createPool({
 const testConnection = async () => {
     try {
         const conn = await pool.getConnection();
-        console.log('✅ Conectado a MySQL (XAMPP)');
+        console.log('Conectado a MySQL (XAMPP)');
         conn.release();
     } catch (error) {
-        console.error('❌ Error de conexión a MySQL:', error.message);
+        console.error('Error de conexión a MySQL:', error.message);
         process.exit(1);
     }
 };

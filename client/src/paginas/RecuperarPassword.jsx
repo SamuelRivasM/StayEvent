@@ -149,13 +149,10 @@ const RecuperarPassword = () => {
                                     type="submit"
                                     disabled={cargando}
                                     className="w-full py-3 px-4 rounded-xl font-semibold text-sm text-white
-                                               bg-gradient-to-r from-purple-600 to-indigo-600
-                                               hover:from-purple-500 hover:to-indigo-500
-                                               disabled:from-purple-800 disabled:to-indigo-800
-                                               shadow-lg shadow-purple-900/50
-                                               hover:-translate-y-0.5 active:translate-y-0
-                                               disabled:cursor-not-allowed disabled:shadow-none
-                                               transition-all duration-200"
+                                                bg-gradient-to-r from-purple-600 to-violet-700
+                                                hover:from-purple-700 hover:to-violet-800
+                                                hover:-translate-y-0.5 active:translate-y-0
+                                                transition-all duration-200"
                                 >
                                     {cargando ? 'Enviando...' : 'Enviar enlace de recuperación'}
                                 </button>
