@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const { testConnection } = require('./config/db');
 const authRutas = require('./rutas/authRutas');
 const eventosRutas = require('./rutas/eventosRutas');
@@ -8,13 +9,28 @@ const eventosRutas = require('./rutas/eventosRutas');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middlewares globales
+// Cabeceras de seguridad HTTP (XSS, clickjacking, MIME sniffing, etc.)
+app.use(helmet());
+
+// CORS: solo permite el origen del frontend
+const ORIGENES_PERMITIDOS = ['http://localhost:3000'];
+
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: (origin, callback) => {
+        if (!origin || ORIGENES_PERMITIDOS.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('CORS: origen no permitido.'));
+        }
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// Limitar tamaño del body para evitar ataques de payload masivo
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
 // Rutas
 app.use('/api/auth', authRutas);
@@ -22,7 +38,7 @@ app.use('/api/eventos', eventosRutas);
 
 // Health check
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'OK', message: 'Stay Event API funcionando ✅' });
+    res.json({ status: 'OK', message: 'Stay Event API funcionando' });
 });
 
 // 404
@@ -30,8 +46,17 @@ app.use((req, res) => {
     res.status(404).json({ mensaje: 'Ruta no encontrada.' });
 });
 
+// Manejador global de errores — nunca expone stack traces al cliente
+app.use((err, req, res, next) => {
+    console.error('Error no controlado:', err.message);
+    if (err.message && err.message.includes('CORS')) {
+        return res.status(403).json({ mensaje: 'Acceso no permitido.' });
+    }
+    res.status(500).json({ mensaje: 'Error interno del servidor.' });
+});
+
 // Iniciar servidor
 app.listen(PORT, async () => {
-    console.log(`\n🚀 Servidor Stay Event corriendo en http://localhost:${PORT}`);
+    console.log(`Servidor Stay Event corriendo en http://localhost:${PORT}`);
     await testConnection();
 });

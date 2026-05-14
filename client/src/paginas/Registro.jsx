@@ -18,6 +18,10 @@ const camposIniciales = {
     telefono: '',
 };
 
+const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const REGEX_CARACTER_ESPECIAL = /[$%#]/;
+const REGEX_SOLO_NUMEROS = /^\d+$/;
+
 // Iconos
 
 const IconoUsuario = () => (
@@ -98,22 +102,54 @@ const Registro = () => {
     };
 
     const validarFormulario = () => {
-        if (!formulario.nombre.trim() || !formulario.apellido.trim()) {
+        const nombre = formulario.nombre.trim();
+        const apellido = formulario.apellido.trim();
+        const email = formulario.email.trim();
+        const telefono = formulario.telefono.trim();
+
+        if (!nombre || !apellido) {
             return 'Nombre y apellido son obligatorios.';
         }
-        if (formulario.nombre.trim().length < 2 || formulario.apellido.trim().length < 2) {
+        if (nombre.length < 2 || apellido.length < 2) {
             return 'Nombre y apellido deben tener al menos 2 caracteres.';
         }
-        if (!formulario.email.trim()) {
-            return 'El email es obligatorio.';
+        if (!email) {
+            return 'El correo electrónico es obligatorio.';
+        }
+        if (!REGEX_EMAIL.test(email)) {
+            return 'El formato del correo electrónico no es válido.';
+        }
+        if (!formulario.password) {
+            return 'La contraseña es obligatoria.';
         }
         if (formulario.password.length < 8) {
             return 'La contraseña debe tener al menos 8 caracteres.';
         }
+        if (!REGEX_CARACTER_ESPECIAL.test(formulario.password)) {
+            return 'La contraseña debe contener al menos un carácter especial ($, %, #).';
+        }
+        if (!formulario.confirmarPassword) {
+            return 'Debes confirmar tu contraseña.';
+        }
         if (formulario.password !== formulario.confirmarPassword) {
             return 'Las contraseñas no coinciden.';
         }
+        if (!telefono) {
+            return 'El teléfono es obligatorio.';
+        }
+        if (!REGEX_SOLO_NUMEROS.test(telefono)) {
+            return 'El teléfono solo debe contener números.';
+        }
+        if (telefono.length !== 9) {
+            return 'El teléfono debe tener exactamente 9 dígitos.';
+        }
         return null;
+    };
+
+    const manejarCambioTelefono = (e) => {
+        const soloNumeros = e.target.value.replace(/\D/g, '').slice(0, 9);
+        setFormulario((prev) => ({ ...prev, telefono: soloNumeros }));
+        setError('');
     };
 
     const manejarEnvio = async (e) => {
@@ -129,7 +165,13 @@ const Registro = () => {
         setCargando(true);
 
         try {
-            const { confirmarPassword, ...datosEnvio } = formulario;
+            const datosEnvio = {
+                nombre: formulario.nombre.trim(),
+                apellido: formulario.apellido.trim(),
+                email: formulario.email.trim().toLowerCase(),
+                password: formulario.password,
+                telefono: formulario.telefono.trim(),
+            };
             const respuesta = await api.post('/auth/register', datosEnvio);
             const { token, usuario } = respuesta.data;
             iniciarSesion(token, usuario);
@@ -272,8 +314,7 @@ const Registro = () => {
                         {/* Teléfono */}
                         <div>
                             <label htmlFor="telefono" className="block text-sm font-medium text-gray-700 mb-1.5">
-                                Teléfono{' '}
-                                <span className="text-gray-400 font-normal">(opcional)</span>
+                                Teléfono
                             </label>
                             <div className="relative">
                                 <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 pointer-events-none">
@@ -284,9 +325,11 @@ const Registro = () => {
                                     type="tel"
                                     name="telefono"
                                     value={formulario.telefono}
-                                    onChange={manejarCambio}
+                                    onChange={manejarCambioTelefono}
+                                    required
+                                    maxLength={9}
                                     autoComplete="tel"
-                                    placeholder="999 999 999"
+                                    placeholder="999999999"
                                     className={claseInput}
                                 />
                             </div>
@@ -364,11 +407,12 @@ const Registro = () => {
                         <button
                             type="submit"
                             disabled={cargando}
-                            className="w-full py-3 px-4 rounded-xl font-semibold text-sm text-white
+                            className={`w-full py-3 px-4 rounded-xl font-semibold text-sm text-white
                                 bg-gradient-to-r from-purple-600 to-violet-700
                                 hover:from-purple-700 hover:to-violet-800
                                 hover:-translate-y-0.5 active:translate-y-0
-                                transition-all duration-200"
+                                transition-all duration-200
+                                ${cargando ? 'opacity-60 cursor-not-allowed' : ''}`}
                         >
                             {cargando ? 'Creando cuenta...' : 'Crear Cuenta'}
                         </button>
