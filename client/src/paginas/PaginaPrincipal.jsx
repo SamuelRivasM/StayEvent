@@ -5,30 +5,28 @@ import api from '../servicios/api';
 
 const CATEGORIAS = ['Conciertos', 'Festivales', 'Fiestas / Discoteca'];
 
+// Imagenes del carrusel que cambian
 const SLIDES = [
     {
         titulo: 'Los mejores\nconciertos del año',
         subtitulo: 'Artistas nacionales e internacionales en vivo en Lima',
-        gradiente: 'from-violet-950 via-purple-900 to-gray-950',
-        orbe: 'bg-purple-700/30',
+        imagen: 'https://www.grupo5.pe/assets/images/bg-1_grupo5.jpg',
         badge: 'Conciertos',
-        badgeColor: 'text-purple-300 border-purple-400/40',
+        badgeColor: 'text-white-300 border-white-400/40',
     },
     {
         titulo: 'Festivales\ninolvidables',
         subtitulo: 'Música, arte y cultura en un mismo lugar',
-        gradiente: 'from-amber-950 via-orange-900 to-gray-950',
-        orbe: 'bg-amber-700/25',
+        imagen: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1920&q=80',
         badge: 'Festivales',
-        badgeColor: 'text-amber-300 border-amber-400/40',
+        badgeColor: 'text-white-300 border-white-400/40',
     },
     {
         titulo: 'La mejor\nvida nocturna',
         subtitulo: 'Los mejores DJ y clubes de la ciudad en una sola plataforma',
-        gradiente: 'from-rose-950 via-pink-900 to-gray-950',
-        orbe: 'bg-pink-700/25',
+        imagen: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=1920&q=80',
         badge: 'Fiestas / Discoteca',
-        badgeColor: 'text-pink-300 border-pink-400/40',
+        badgeColor: 'text-white-300 border-white-400/40',
     },
 ];
 
@@ -110,9 +108,15 @@ const PaginaPrincipal = () => {
                         key={idx}
                         className={`absolute inset-0 transition-opacity duration-1000 ${idx === slideActual ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                     >
-                        <div className={`absolute inset-0 bg-gradient-to-br ${slide.gradiente}`} />
-                        <div className={`absolute top-1/3 left-1/4 w-[600px] h-[600px] ${slide.orbe} rounded-full blur-3xl pointer-events-none`} />
-                        <div className="absolute inset-0 bg-black/15" />
+                        <img
+                            src={slide.imagen}
+                            alt=""
+                            className="absolute inset-0 w-full h-full object-cover"
+                            loading={idx === 0 ? 'eager' : 'lazy'}
+                        />
+                        {/* Overlay cinematográfico */}
+                        <div className="absolute inset-0 bg-black/50" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/40" />
                     </div>
                 ))}
 
