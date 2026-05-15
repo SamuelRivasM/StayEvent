@@ -22,6 +22,18 @@ const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const REGEX_CARACTER_ESPECIAL = /[$%#]/;
 const REGEX_SOLO_NUMEROS = /^\d+$/;
 
+const PAISES_LATAM = [
+    { codigo: '+51', nombre: 'Perú', bandera: '🇵🇪', digitos: 9, placeholder: '999999999' },
+    { codigo: '+56', nombre: 'Chile', bandera: '🇨🇱', digitos: 9, placeholder: '912345678' },
+    { codigo: '+54', nombre: 'Argentina', bandera: '🇦🇷', digitos: 10, placeholder: '1123456789' },
+    { codigo: '+57', nombre: 'Colombia', bandera: '🇨🇴', digitos: 10, placeholder: '3001234567' },
+    { codigo: '+52', nombre: 'México', bandera: '🇲🇽', digitos: 10, placeholder: '5512345678' },
+    { codigo: '+593', nombre: 'Ecuador', bandera: '🇪🇨', digitos: 9, placeholder: '991234567' },
+    { codigo: '+591', nombre: 'Bolivia', bandera: '🇧🇴', digitos: 8, placeholder: '71234567' },
+    { codigo: '+598', nombre: 'Uruguay', bandera: '🇺🇾', digitos: 8, placeholder: '91234567' },
+    { codigo: '+595', nombre: 'Paraguay', bandera: '🇵🇾', digitos: 9, placeholder: '981234567' },
+];
+
 // Iconos
 
 const IconoUsuario = () => (
@@ -86,10 +98,13 @@ const claseInput = `w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl tex
 
 const Registro = () => {
     const [formulario, setFormulario] = useState(camposIniciales);
+    const [codigoPais, setCodigoPais] = useState('+51');
     const [error, setError] = useState('');
     const [cargando, setCargando] = useState(false);
     const [mostrarPassword, setMostrarPassword] = useState(false);
     const [mostrarConfirmar, setMostrarConfirmar] = useState(false);
+
+    const paisActual = PAISES_LATAM.find(p => p.codigo === codigoPais) || PAISES_LATAM[0];
 
     const { iniciarSesion } = useAuth();
     const navigate = useNavigate();
@@ -140,14 +155,20 @@ const Registro = () => {
         if (!REGEX_SOLO_NUMEROS.test(telefono)) {
             return 'El teléfono solo debe contener números.';
         }
-        if (telefono.length !== 9) {
-            return 'El teléfono debe tener exactamente 9 dígitos.';
+        if (telefono.length !== paisActual.digitos) {
+            return `El teléfono debe tener exactamente ${paisActual.digitos} dígitos para ${paisActual.nombre}.`;
         }
         return null;
     };
 
+    const manejarCambioPais = (e) => {
+        setCodigoPais(e.target.value);
+        setFormulario((prev) => ({ ...prev, telefono: '' }));
+        setError('');
+    };
+
     const manejarCambioTelefono = (e) => {
-        const soloNumeros = e.target.value.replace(/\D/g, '').slice(0, 9);
+        const soloNumeros = e.target.value.replace(/\D/g, '').slice(0, paisActual.digitos);
         setFormulario((prev) => ({ ...prev, telefono: soloNumeros }));
         setError('');
     };
@@ -170,6 +191,7 @@ const Registro = () => {
                 apellido: formulario.apellido.trim(),
                 email: formulario.email.trim().toLowerCase(),
                 password: formulario.password,
+                codigoPais,
                 telefono: formulario.telefono.trim(),
             };
             const respuesta = await api.post('/auth/register', datosEnvio);
@@ -316,10 +338,22 @@ const Registro = () => {
                             <label htmlFor="telefono" className="block text-sm font-medium text-gray-700 mb-1.5">
                                 Teléfono
                             </label>
-                            <div className="relative">
-                                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 pointer-events-none">
+                            <div className="flex rounded-xl border border-gray-200 overflow-hidden bg-gray-50 hover:bg-white focus-within:bg-white focus-within:ring-2 focus-within:ring-purple-500 focus-within:border-transparent transition-colors">
+                                <span className="flex items-center pl-3.5 text-gray-400 pointer-events-none shrink-0">
                                     <IconoTelefono />
                                 </span>
+                                <select
+                                    value={codigoPais}
+                                    onChange={manejarCambioPais}
+                                    aria-label="Código de país"
+                                    className="shrink-0 bg-transparent border-r border-gray-200 pl-2 pr-1 py-3 text-sm text-gray-700 focus:outline-none cursor-pointer"
+                                >
+                                    {PAISES_LATAM.map(p => (
+                                        <option key={p.codigo} value={p.codigo}>
+                                            {p.bandera} {p.codigo}
+                                        </option>
+                                    ))}
+                                </select>
                                 <input
                                     id="telefono"
                                     type="tel"
@@ -327,10 +361,10 @@ const Registro = () => {
                                     value={formulario.telefono}
                                     onChange={manejarCambioTelefono}
                                     required
-                                    maxLength={9}
+                                    maxLength={paisActual.digitos}
                                     autoComplete="tel"
-                                    placeholder="999999999"
-                                    className={claseInput}
+                                    placeholder={paisActual.placeholder}
+                                    className="flex-1 pl-3 pr-4 py-3 bg-transparent text-sm focus:outline-none"
                                 />
                             </div>
                         </div>

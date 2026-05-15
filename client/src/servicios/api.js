@@ -23,8 +23,13 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            localStorage.removeItem('token');
-            window.location.href = '/login';
+            const esEndpointLogout = error.config?.url?.includes('/auth/logout');
+            if (!esEndpointLogout) {
+                // Propagar señal de logout a otras pestañas antes de redirigir
+                localStorage.setItem('stay_event_logout', Date.now().toString());
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+            }
         }
         return Promise.reject(error);
     }

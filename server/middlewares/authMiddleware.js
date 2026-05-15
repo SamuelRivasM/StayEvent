@@ -1,8 +1,9 @@
 const jwt = require('jsonwebtoken');
+const { pool } = require('../config/db');
 
 const ROLES_VALIDOS = new Set(['admin', 'usuario', 'organizador']);
 
-const verificarToken = (req, res, next) => {
+const verificarToken = async (req, res, next) => {
     const authHeader = req.headers['authorization'];
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -19,17 +20,30 @@ const verificarToken = (req, res, next) => {
         // Especificar algoritmo explícitamente previene ataques de confusión de algoritmo
         const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
 
-        // Validar que el payload tenga la estructura esperada
+        // Validar que el payload tenga la estructura esperada, incluido jti
         if (
             typeof decoded.id !== 'number' ||
             typeof decoded.rol !== 'string' ||
-            !ROLES_VALIDOS.has(decoded.rol)
+            !ROLES_VALIDOS.has(decoded.rol) ||
+            typeof decoded.jti !== 'string'
         ) {
             return res.status(401).json({ mensaje: 'Token inválido.' });
         }
 
-        // Exponer solo los campos necesarios, no todo el payload decodificado
-        req.usuario = { id: decoded.id, rol: decoded.rol };
+        // Verificar que la sesión esté activa en la base de datos
+        const [sesiones] = await pool.execute(
+            'SELECT activo FROM sesiones_activas WHERE jti = ? AND usuario_id = ? AND expira_en > NOW()',
+            [decoded.jti, decoded.id]
+        );
+
+        // mysql2 puede devolver TINYINT(1) como boolean (false) o number (0)
+        // según la configuración de typeCast. !activo cubre ambos casos.
+        if (sesiones.length === 0 || !sesiones[0].activo) {
+            return res.status(401).json({ mensaje: 'Sesión inválida o cerrada. Inicia sesión nuevamente.' });
+        }
+
+        // Exponer solo los campos necesarios
+        req.usuario = { id: decoded.id, rol: decoded.rol, jti: decoded.jti };
         next();
     } catch (error) {
         if (error.name === 'TokenExpiredError') {

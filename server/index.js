@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const { testConnection } = require('./config/db');
+const { testConnection, pool } = require('./config/db');
 const authRutas = require('./rutas/authRutas');
 const eventosRutas = require('./rutas/eventosRutas');
 
@@ -66,8 +66,34 @@ app.use((err, req, res, next) => {
     res.status(500).json({ mensaje: 'Error interno del servidor.' });
 });
 
+const inicializarDB = async () => {
+    try {
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS sesiones_activas (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario_id INT NOT NULL,
+                jti VARCHAR(64) NOT NULL,
+                creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                expira_en DATETIME NOT NULL,
+                activo TINYINT(1) NOT NULL DEFAULT 1,
+                UNIQUE KEY uk_jti (jti),
+                INDEX idx_usuario_activo (usuario_id, activo),
+                INDEX idx_expira_en (expira_en),
+                FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `);
+        await pool.execute(
+            'UPDATE sesiones_activas SET activo = 0 WHERE expira_en < NOW() AND activo = 1'
+        );
+        console.log('Tabla sesiones_activas lista.');
+    } catch (error) {
+        console.error('Error al inicializar tabla de sesiones:', error.message);
+    }
+};
+
 // Iniciar servidor
 app.listen(PORT, async () => {
     console.log(`Servidor Stay Event corriendo en http://localhost:${PORT}`);
     await testConnection();
+    await inicializarDB();
 });

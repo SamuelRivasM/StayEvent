@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
-const { registrar, iniciarSesion, obtenerPerfil } = require('../controladores/authControlador');
+const { registrar, iniciarSesion, obtenerPerfil, cerrarSesion } = require('../controladores/authControlador');
 const { verificarToken } = require('../middlewares/authMiddleware');
 
 const limitadorRegistro = rateLimit({
@@ -30,5 +30,8 @@ router.post('/login', limitadorLogin, iniciarSesion);
 
 // GET /api/auth/me
 router.get('/me', verificarToken, obtenerPerfil);
+
+// POST /api/auth/logout
+router.post('/logout', verificarToken, cerrarSesion);
 
 module.exports = router;
