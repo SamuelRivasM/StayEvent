@@ -93,13 +93,38 @@ const Login = () => {
         setError('');
     };
 
+    const REGEX_EMAIL_LOGIN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     const manejarEnvio = async (e) => {
         e.preventDefault();
         setCargando(true);
         setError('');
 
+        const emailTrimmed = formulario.email.trim();
+        const passwordTrimmed = formulario.password.trim();
+
+        // Validaciones client-side antes de enviar al servidor
+        if (!emailTrimmed || !passwordTrimmed) {
+            setError('Email y contraseña son requeridos.');
+            setCargando(false);
+            return;
+        }
+        if (!REGEX_EMAIL_LOGIN.test(emailTrimmed)) {
+            setError('Ingresa un correo electrónico válido.');
+            setCargando(false);
+            return;
+        }
+        if (emailTrimmed.length > 100 || passwordTrimmed.length > 72) {
+            setError('Credenciales inválidas.');
+            setCargando(false);
+            return;
+        }
+
         try {
-            const respuesta = await api.post('/auth/login', formulario);
+            const respuesta = await api.post('/auth/login', {
+                email: emailTrimmed,
+                password: passwordTrimmed,
+            });
             const { token, usuario } = respuesta.data;
             iniciarSesion(token, usuario);
             navigate(RUTA_POR_ROL[usuario.rol] || '/usuario', { replace: true });
@@ -185,6 +210,7 @@ const Login = () => {
                                     required
                                     autoComplete="email"
                                     placeholder="correo@ejemplo.com"
+                                    maxLength={100}
                                     className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl text-sm
                                                bg-gray-50 hover:bg-white focus:bg-white focus:outline-none
                                                focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
@@ -210,6 +236,7 @@ const Login = () => {
                                     required
                                     autoComplete="current-password"
                                     placeholder="••••••••"
+                                    maxLength={72}
                                     className="w-full pl-11 pr-12 py-3 border border-gray-200 rounded-xl text-sm
                                                bg-gray-50 hover:bg-white focus:bg-white focus:outline-none
                                                focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"

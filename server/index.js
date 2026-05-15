@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const { testConnection } = require('./config/db');
 const authRutas = require('./rutas/authRutas');
 const eventosRutas = require('./rutas/eventosRutas');
@@ -31,6 +32,16 @@ app.use(cors({
 // Limitar tamaño del body para evitar ataques de payload masivo
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+// Limitador global: capa de protección contra DoS en cualquier endpoint
+const limitadorGlobal = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 200,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { mensaje: 'Demasiadas solicitudes. Intenta más tarde.' },
+});
+app.use(limitadorGlobal);
 
 // Rutas
 app.use('/api/auth', authRutas);

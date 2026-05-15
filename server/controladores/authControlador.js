@@ -8,6 +8,24 @@ const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const REGEX_CARACTER_ESPECIAL = /[$%#]/;
 const REGEX_SOLO_NUMEROS = /^\d+$/;
 
+const MAX_EMAIL_LENGTH = 100;
+const MAX_PASSWORD_LENGTH = 72;
+const DELAY_BASE_MS = 300;
+const MAX_DELAY_MS = 4000;
+
+// Rastreo en memoria de intentos fallidos por IP para retraso progresivo
+const intentosFallidos = new Map();
+
+setInterval(() => {
+    const ahora = Date.now();
+    for (const [clave, datos] of intentosFallidos.entries()) {
+        if (ahora - datos.ultimoIntento > 30 * 60 * 1000) intentosFallidos.delete(clave);
+    }
+}, 30 * 60 * 1000).unref();
+
+const calcularDelay = (intentos) =>
+    Math.min(DELAY_BASE_MS * Math.pow(2, Math.max(0, intentos - 2)), MAX_DELAY_MS);
+
 const registrar = async (req, res) => {
     try {
         // Rechazar campos no esperados
@@ -122,33 +140,69 @@ const registrar = async (req, res) => {
 };
 
 const iniciarSesion = async (req, res) => {
+    const ip = req.ip || 'unknown';
+
     try {
         const { email, password } = req.body;
 
-        if (!email || !password) {
+        // Validación de tipos para evitar inyección de objetos
+        if (typeof email !== 'string' || typeof password !== 'string') {
+            return res.status(400).json({ mensaje: 'Credenciales inválidas.' });
+        }
+
+        const emailNormalizado = email.trim().toLowerCase();
+        const passwordSanitizada = password.trim();
+
+        if (!emailNormalizado || !passwordSanitizada) {
             return res.status(400).json({ mensaje: 'Email y contraseña son requeridos.' });
+        }
+
+        // Límites de longitud
+        if (emailNormalizado.length > MAX_EMAIL_LENGTH || passwordSanitizada.length > MAX_PASSWORD_LENGTH) {
+            return res.status(400).json({ mensaje: 'Credenciales inválidas.' });
+        }
+
+        // Validación de formato de email
+        if (!REGEX_EMAIL.test(emailNormalizado)) {
+            return res.status(400).json({ mensaje: 'Credenciales inválidas.' });
+        }
+
+        // Retraso progresivo a partir del 3er intento fallido desde la misma IP
+        const datosIP = intentosFallidos.get(ip);
+        if (datosIP && datosIP.count >= 3) {
+            await new Promise((resolve) => setTimeout(resolve, calcularDelay(datosIP.count)));
         }
 
         const [usuarios] = await pool.query(
             'SELECT id, nombre, apellido, email, password, rol FROM usuarios WHERE email = ?',
-            [email.toLowerCase().trim()]
+            [emailNormalizado]
         );
 
+        const registrarFallo = () => {
+            const datos = intentosFallidos.get(ip) || { count: 0 };
+            intentosFallidos.set(ip, { count: datos.count + 1, ultimoIntento: Date.now() });
+        };
+
         if (usuarios.length === 0) {
+            registrarFallo();
             return res.status(401).json({ mensaje: 'Credenciales inválidas.' });
         }
 
         const usuario = usuarios[0];
-        const passwordValida = await bcrypt.compare(password, usuario.password);
+        const passwordValida = await bcrypt.compare(passwordSanitizada, usuario.password);
 
         if (!passwordValida) {
+            registrarFallo();
             return res.status(401).json({ mensaje: 'Credenciales inválidas.' });
         }
+
+        // Limpiar historial de fallos al autenticarse correctamente
+        intentosFallidos.delete(ip);
 
         const token = jwt.sign(
             { id: usuario.id, rol: usuario.rol },
             process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+            { expiresIn: process.env.JWT_EXPIRES_IN || '7d', algorithm: 'HS256' }
         );
 
         return res.status(200).json({
