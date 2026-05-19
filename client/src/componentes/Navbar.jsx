@@ -54,6 +54,14 @@ const Navbar = () => {
                     <div className="hidden sm:flex items-center gap-3">
                         {usuario ? (
                             <>
+                                {usuario.rol === 'organizador' && (
+                                    <Link
+                                        to="/organizador/eventos"
+                                        className="px-4 py-1.5 text-sm font-medium text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400/50 transition-all duration-200"
+                                    >
+                                        Gestión Eventos
+                                    </Link>
+                                )}
                                 <div className="flex items-center gap-2.5 px-3 py-1.5 bg-white/5 border border-white/10 text-sm">
                                     <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0">
                                         {usuario.nombre?.charAt(0).toUpperCase()}
@@ -115,6 +123,15 @@ const Navbar = () => {
                                         {usuario.nombre} {usuario.apellido}
                                     </span>
                                 </div>
+                                {usuario.rol === 'organizador' && (
+                                    <Link
+                                        to="/organizador/eventos"
+                                        onClick={() => setMenuAbierto(false)}
+                                        className="block px-3 py-2 text-sm text-purple-400 hover:text-purple-300 hover:bg-white/5 transition-all"
+                                    >
+                                        Gestión Eventos
+                                    </Link>
+                                )}
                                 <button
                                     onClick={handleCerrarSesion}
                                     className="w-full text-left px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-all"
