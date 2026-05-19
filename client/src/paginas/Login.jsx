@@ -6,7 +6,7 @@ import api from '../servicios/api';
 const RUTA_POR_ROL = {
     admin: '/admin',
     usuario: '/',
-    organizador: '/organizador',
+    organizador: '/',
 };
 
 // Iconos

@@ -7,14 +7,13 @@ import Login from './paginas/Login';
 import Registro from './paginas/Registro';
 import RecuperarPassword from './paginas/RecuperarPassword';
 import PaginaAdmin from './paginas/PaginaAdmin';
-import PaginaOrganizador from './paginas/PaginaOrganizador';
+import GestionEventos from './paginas/GestionEventos';
 
 function App() {
     return (
         <BrowserRouter>
             <AuthProvider>
                 <Routes>
-                    {/* Página principal pública */}
                     <Route path="/" element={<PaginaPrincipal />} />
 
                     {/* Rutas públicas */}
@@ -33,9 +32,13 @@ function App() {
                     />
                     <Route
                         path="/organizador"
+                        element={<Navigate to="/organizador/eventos" replace />}
+                    />
+                    <Route
+                        path="/organizador/eventos"
                         element={
                             <RutaPrivada rolesPermitidos={['organizador']}>
-                                <PaginaOrganizador />
+                                <GestionEventos />
                             </RutaPrivada>
                         }
                     />

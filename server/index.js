@@ -10,7 +10,7 @@ const eventosRutas = require('./rutas/eventosRutas');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Cabeceras de seguridad HTTP (XSS, clickjacking, MIME sniffing, etc.)
+// cabeceras de seguridad HTTP
 app.use(helmet());
 
 // CORS: solo permite el origen del frontend
@@ -25,15 +25,15 @@ app.use(cors({
         }
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Limitar tamaño del body para evitar ataques de payload masivo
+// límite de body
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-// Limitador global: capa de protección contra DoS en cualquier endpoint
+// rate limit global
 const limitadorGlobal = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 200,
@@ -57,7 +57,7 @@ app.use((req, res) => {
     res.status(404).json({ mensaje: 'Ruta no encontrada.' });
 });
 
-// Manejador global de errores — nunca expone stack traces al cliente
+// error handler global
 app.use((err, req, res, next) => {
     console.error('Error no controlado:', err.message);
     if (err.message && err.message.includes('CORS')) {
@@ -65,6 +65,18 @@ app.use((err, req, res, next) => {
     }
     res.status(500).json({ mensaje: 'Error interno del servidor.' });
 });
+
+const agregarColumnaEventosSiNoExiste = async (columna, definicion) => {
+    const [filas] = await pool.execute(
+        `SELECT COUNT(*) AS count FROM information_schema.columns
+         WHERE table_schema = DATABASE() AND table_name = 'eventos' AND column_name = ?`,
+        [columna]
+    );
+    if (filas[0].count === 0) {
+        await pool.execute(`ALTER TABLE eventos ADD COLUMN ${columna} ${definicion}`);
+        console.log(`Columna '${columna}' agregada a tabla eventos.`);
+    }
+};
 
 const inicializarDB = async () => {
     try {
@@ -86,8 +98,13 @@ const inicializarDB = async () => {
             'UPDATE sesiones_activas SET activo = 0 WHERE expira_en < NOW() AND activo = 1'
         );
         console.log('Tabla sesiones_activas lista.');
+
+        // columnas del módulo organizador
+        await agregarColumnaEventosSiNoExiste('organizador_id', 'INT NULL');
+        await agregarColumnaEventosSiNoExiste('stock', 'INT NOT NULL DEFAULT 0');
+        await agregarColumnaEventosSiNoExiste('eliminado', 'TINYINT(1) NOT NULL DEFAULT 0');
     } catch (error) {
-        console.error('Error al inicializar tabla de sesiones:', error.message);
+        console.error('Error al inicializar DB:', error.message);
     }
 };
 

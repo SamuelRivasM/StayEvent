@@ -17,10 +17,10 @@ const verificarToken = async (req, res, next) => {
     }
 
     try {
-        // Especificar algoritmo explícitamente previene ataques de confusión de algoritmo
+        // algoritmo explícito — previene ataques de confusión de algoritmo
         const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
 
-        // Validar que el payload tenga la estructura esperada, incluido jti
+        // validar estructura del payload: id, rol y jti
         if (
             typeof decoded.id !== 'number' ||
             typeof decoded.rol !== 'string' ||
@@ -30,19 +30,17 @@ const verificarToken = async (req, res, next) => {
             return res.status(401).json({ mensaje: 'Token inválido.' });
         }
 
-        // Verificar que la sesión esté activa en la base de datos
+        // verificar sesión activa en DB
         const [sesiones] = await pool.execute(
             'SELECT activo FROM sesiones_activas WHERE jti = ? AND usuario_id = ? AND expira_en > NOW()',
             [decoded.jti, decoded.id]
         );
 
-        // mysql2 puede devolver TINYINT(1) como boolean (false) o number (0)
-        // según la configuración de typeCast. !activo cubre ambos casos.
+        // !activo cubre bool y number (typeCast de mysql2)
         if (sesiones.length === 0 || !sesiones[0].activo) {
             return res.status(401).json({ mensaje: 'Sesión inválida o cerrada. Inicia sesión nuevamente.' });
         }
 
-        // Exponer solo los campos necesarios
         req.usuario = { id: decoded.id, rol: decoded.rol, jti: decoded.jti };
         next();
     } catch (error) {
@@ -53,4 +51,11 @@ const verificarToken = async (req, res, next) => {
     }
 };
 
-module.exports = { verificarToken };
+const verificarRol = (...roles) => (req, res, next) => {
+    if (!req.usuario || !roles.includes(req.usuario.rol)) {
+        return res.status(403).json({ mensaje: 'Acceso denegado.' });
+    }
+    next();
+};
+
+module.exports = { verificarToken, verificarRol };
