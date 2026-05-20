@@ -62,6 +62,14 @@ const Navbar = () => {
                                         Gestión Eventos
                                     </Link>
                                 )}
+                                {usuario.rol === 'usuario' && (
+                                    <Link
+                                        to="/mis-tickets"
+                                        className="px-4 py-1.5 text-sm font-medium text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400/50 transition-all duration-200"
+                                    >
+                                        Mis Tickets
+                                    </Link>
+                                )}
                                 <div className="flex items-center gap-2.5 px-3 py-1.5 bg-white/5 border border-white/10 text-sm">
                                     <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0">
                                         {usuario.nombre?.charAt(0).toUpperCase()}
@@ -130,6 +138,15 @@ const Navbar = () => {
                                         className="block px-3 py-2 text-sm text-purple-400 hover:text-purple-300 hover:bg-white/5 transition-all"
                                     >
                                         Gestión Eventos
+                                    </Link>
+                                )}
+                                {usuario.rol === 'usuario' && (
+                                    <Link
+                                        to="/mis-tickets"
+                                        onClick={() => setMenuAbierto(false)}
+                                        className="block px-3 py-2 text-sm text-purple-400 hover:text-purple-300 hover:bg-white/5 transition-all"
+                                    >
+                                        Mis Tickets
                                     </Link>
                                 )}
                                 <button
