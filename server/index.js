@@ -7,6 +7,7 @@ const { testConnection, pool } = require('./config/db');
 const authRutas = require('./rutas/authRutas');
 const eventosRutas = require('./rutas/eventosRutas');
 const comprasRutas = require('./rutas/comprasRutas');
+const usuariosRutas = require('./rutas/usuariosRutas');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -48,6 +49,7 @@ app.use(limitadorGlobal);
 app.use('/api/auth', authRutas);
 app.use('/api/eventos', eventosRutas);
 app.use('/api/compras', comprasRutas);
+app.use('/api/usuarios', usuariosRutas);
 
 // Health check
 app.get('/api/health', (req, res) => {

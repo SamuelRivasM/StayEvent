@@ -9,6 +9,7 @@ import RecuperarPassword from './paginas/RecuperarPassword';
 import PaginaAdmin from './paginas/PaginaAdmin';
 import GestionEventos from './paginas/GestionEventos';
 import MisTickets from './paginas/MisTickets';
+import ConfigurarPerfil from './paginas/ConfigurarPerfil';
 
 function App() {
     return (
@@ -49,6 +50,15 @@ function App() {
                         element={
                             <RutaPrivada rolesPermitidos={['usuario']}>
                                 <MisTickets />
+                            </RutaPrivada>
+                        }
+                    />
+
+                    <Route
+                        path="/perfil"
+                        element={
+                            <RutaPrivada rolesPermitidos={['admin', 'usuario', 'organizador']}>
+                                <ConfigurarPerfil />
                             </RutaPrivada>
                         }
                     />

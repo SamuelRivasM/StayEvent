@@ -8,7 +8,9 @@ const Navbar = () => {
     const [menuAbierto, setMenuAbierto] = useState(false);
     const [navVisible, setNavVisible] = useState(true);
     const [scrolled, setScrolled] = useState(false);
+    const [dropdownAbierto, setDropdownAbierto] = useState(false);
     const prevScrollRef = useRef(0);
+    const dropdownRef = useRef(null);
 
     useEffect(() => {
         const onScroll = () => {
@@ -19,6 +21,16 @@ const Navbar = () => {
         };
         window.addEventListener('scroll', onScroll, { passive: true });
         return () => window.removeEventListener('scroll', onScroll);
+    }, []);
+
+    useEffect(() => {
+        const handleClickFuera = (e) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+                setDropdownAbierto(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickFuera);
+        return () => document.removeEventListener('mousedown', handleClickFuera);
     }, []);
 
     const handleCerrarSesion = () => {
@@ -70,14 +82,40 @@ const Navbar = () => {
                                         Mis Tickets
                                     </Link>
                                 )}
-                                <div className="flex items-center gap-2.5 px-3 py-1.5 bg-white/5 border border-white/10 text-sm">
-                                    <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0">
-                                        {usuario.nombre?.charAt(0).toUpperCase()}
-                                    </div>
-                                    <span className="text-gray-300 font-medium">
-                                        {usuario.nombre} {usuario.apellido}
-                                    </span>
+
+                                {/* Avatar con dropdown */}
+                                <div className="relative" ref={dropdownRef}>
+                                    <button
+                                        onClick={() => setDropdownAbierto(v => !v)}
+                                        className="flex items-center gap-2.5 px-3 py-1.5 bg-white/5 border border-white/10 text-sm hover:bg-white/10 transition-colors duration-200"
+                                    >
+                                        <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0">
+                                            {usuario.nombre?.charAt(0).toUpperCase()}
+                                        </div>
+                                        <span className="text-gray-300 font-medium">
+                                            {usuario.nombre} {usuario.apellido}
+                                        </span>
+                                        <svg
+                                            className={`w-3.5 h-3.5 text-gray-500 transition-transform duration-200 ${dropdownAbierto ? 'rotate-180' : ''}`}
+                                            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+
+                                    {dropdownAbierto && (
+                                        <div className="absolute right-0 top-full mt-1 w-44 bg-gray-900 border border-white/10 shadow-xl z-50">
+                                            <Link
+                                                to="/perfil"
+                                                onClick={() => setDropdownAbierto(false)}
+                                                className="block px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
+                                            >
+                                                Configurar perfil
+                                            </Link>
+                                        </div>
+                                    )}
                                 </div>
+
                                 <button
                                     onClick={handleCerrarSesion}
                                     className="px-4 py-1.5 text-sm font-medium text-gray-400 border border-white/15 hover:border-white/35 hover:text-white transition-all duration-200"
@@ -149,6 +187,13 @@ const Navbar = () => {
                                         Mis Tickets
                                     </Link>
                                 )}
+                                <Link
+                                    to="/perfil"
+                                    onClick={() => setMenuAbierto(false)}
+                                    className="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+                                >
+                                    Configurar perfil
+                                </Link>
                                 <button
                                     onClick={handleCerrarSesion}
                                     className="w-full text-left px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-all"

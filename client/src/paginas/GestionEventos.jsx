@@ -189,7 +189,16 @@ const GestionEventos = () => {
         }
     }, [cerrarModal, cargarDatos, mostrarToast]);
 
-    const confirmarCambioEstado = useCallback((evento) => setConfirmando({ tipo: 'estado', evento }), []);
+    const confirmarCambioEstado = useCallback((evento) => {
+        if (!evento.activo) {
+            const fechaEvento = evento.fecha ? evento.fecha.split('T')[0] : '';
+            if (fechaEvento < fechaHoy()) {
+                setErrorPagina('No se puede activar un evento cuya fecha ya pasó.');
+                return;
+            }
+        }
+        setConfirmando({ tipo: 'estado', evento });
+    }, []);
     const confirmarEliminar = useCallback((evento) => setConfirmando({ tipo: 'eliminar', evento }), []);
     const cancelarConfirmacion = useCallback(() => setConfirmando(null), []);
 

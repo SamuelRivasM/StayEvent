@@ -280,7 +280,7 @@ const cambiarEstadoEvento = async (req, res) => {
         }
 
         const [filas] = await pool.query(
-            'SELECT id, activo FROM eventos WHERE id = ? AND organizador_id = ? AND eliminado = 0',
+            'SELECT id, activo, (fecha >= CURDATE()) AS fecha_futura FROM eventos WHERE id = ? AND organizador_id = ? AND eliminado = 0',
             [eventoId, req.usuario.id]
         );
         if (filas.length === 0) {
@@ -288,6 +288,9 @@ const cambiarEstadoEvento = async (req, res) => {
         }
 
         const nuevoEstado = filas[0].activo ? 0 : 1;
+        if (nuevoEstado === 1 && !filas[0].fecha_futura) {
+            return res.status(400).json({ mensaje: 'No se puede activar un evento cuya fecha ya pasó.' });
+        }
         await pool.query(
             'UPDATE eventos SET activo = ? WHERE id = ? AND organizador_id = ?',
             [nuevoEstado, eventoId, req.usuario.id]

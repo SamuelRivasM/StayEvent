@@ -45,6 +45,10 @@ export const AuthProvider = ({ children }) => {
         setUsuario(datosUsuario);
     };
 
+    const actualizarDatosUsuario = useCallback((datosParciales) => {
+        setUsuario(prev => prev ? { ...prev, ...datosParciales } : prev);
+    }, []);
+
     const cerrarSesion = useCallback(() => {
         // Capturar el token ANTES de cualquier modificación a localStorage.
         // El interceptor de axios corre en microtarea (async), por lo que si se
@@ -67,7 +71,7 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     return (
-        <AuthContext.Provider value={{ usuario, cargando, iniciarSesion, cerrarSesion }}>
+        <AuthContext.Provider value={{ usuario, cargando, iniciarSesion, cerrarSesion, actualizarDatosUsuario }}>
             {children}
         </AuthContext.Provider>
     );
