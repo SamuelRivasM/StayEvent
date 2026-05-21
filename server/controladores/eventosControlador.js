@@ -24,8 +24,8 @@ const validarZonas = (zonas) => {
         if (!nombre) return 'Cada zona debe tener un nombre válido (máx. 50 caracteres).';
         const precio = parseFloat(z.precio);
         const stock = parseInt(z.stock ?? 0, 10);
-        if (isNaN(precio) || precio < 0) return 'El precio de cada zona debe ser un número no negativo.';
-        if (isNaN(stock) || stock < 0) return 'La capacidad de cada zona debe ser un número no negativo.';
+        if (isNaN(precio) || precio <= 0) return 'El precio de cada zona debe ser mayor a 0.';
+        if (isNaN(stock) || stock <= 0) return 'La capacidad de cada zona debe ser mayor a 0.';
     }
     return null;
 };

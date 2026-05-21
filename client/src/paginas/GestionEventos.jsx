@@ -170,6 +170,19 @@ const GestionEventos = () => {
             return;
         }
 
+        for (const zona of zonasRef.current) {
+            const precio = parseFloat(zona.precio);
+            const stock = parseInt(zona.stock, 10);
+            if (isNaN(precio) || precio <= 0) {
+                setErrorModal('El precio de cada zona debe ser mayor a 0.');
+                return;
+            }
+            if (isNaN(stock) || stock <= 0) {
+                setErrorModal('La capacidad de cada zona debe ser mayor a 0.');
+                return;
+            }
+        }
+
         setGuardando(true);
         try {
             const payload = { ...formularioRef.current, zonas: zonasRef.current };
@@ -422,8 +435,9 @@ const GestionEventos = () => {
                                                     type="number"
                                                     value={zona.precio}
                                                     onChange={e => actualizarZona(idx, 'precio', e.target.value)}
+                                                    onKeyDown={e => e.key === '-' && e.preventDefault()}
                                                     placeholder="0.00"
-                                                    min="0"
+                                                    min="0.01"
                                                     step="0.01"
                                                     className={inputCls}
                                                 />
@@ -431,8 +445,9 @@ const GestionEventos = () => {
                                                     type="number"
                                                     value={zona.stock}
                                                     onChange={e => actualizarZona(idx, 'stock', e.target.value)}
-                                                    placeholder="0"
-                                                    min="0"
+                                                    onKeyDown={e => e.key === '-' && e.preventDefault()}
+                                                    placeholder="1"
+                                                    min="1"
                                                     className={inputCls}
                                                 />
                                                 <button
