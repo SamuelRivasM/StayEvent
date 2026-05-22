@@ -9,8 +9,7 @@ const pool = mysql.createPool({
     port: process.env.DB_PORT,
 
     ssl: {
-        minVersion: 'TLSv1.2',
-        rejectUnauthorized: true
+        rejectUnauthorized: false
     },
 
     waitForConnections: true,
@@ -27,7 +26,6 @@ const testConnection = async () => {
         conn.release();
     } catch (error) {
         console.error('Error de conexión a MySQL:', error.message);
-
         process.exit(1);
     }
 };
