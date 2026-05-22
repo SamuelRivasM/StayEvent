@@ -6,6 +6,8 @@ const rateLimit = require('express-rate-limit');
 const { testConnection, pool } = require('./config/db');
 const authRutas = require('./rutas/authRutas');
 const eventosRutas = require('./rutas/eventosRutas');
+const comprasRutas = require('./rutas/comprasRutas');
+const usuariosRutas = require('./rutas/usuariosRutas');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -46,6 +48,8 @@ app.use(limitadorGlobal);
 // Rutas
 app.use('/api/auth', authRutas);
 app.use('/api/eventos', eventosRutas);
+app.use('/api/compras', comprasRutas);
+app.use('/api/usuarios', usuariosRutas);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -98,11 +102,6 @@ const inicializarDB = async () => {
             'UPDATE sesiones_activas SET activo = 0 WHERE expira_en < NOW() AND activo = 1'
         );
         console.log('Tabla sesiones_activas lista.');
-
-        // columnas del módulo organizador
-        await agregarColumnaEventosSiNoExiste('organizador_id', 'INT NULL');
-        await agregarColumnaEventosSiNoExiste('stock', 'INT NOT NULL DEFAULT 0');
-        await agregarColumnaEventosSiNoExiste('eliminado', 'TINYINT(1) NOT NULL DEFAULT 0');
     } catch (error) {
         console.error('Error al inicializar DB:', error.message);
     }

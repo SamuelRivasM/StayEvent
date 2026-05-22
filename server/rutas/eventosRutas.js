@@ -3,6 +3,7 @@ const router = express.Router();
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware');
 const {
     obtenerEventos,
+    obtenerDetalleEvento,
     obtenerEstadisticas,
     obtenerEventosOrganizador,
     crearEvento,
@@ -13,6 +14,7 @@ const {
 
 // Público
 router.get('/', obtenerEventos);
+router.get('/:id/detalle', obtenerDetalleEvento);
 
 // Organizador — rutas específicas antes de /:id para evitar conflictos
 router.get('/estadisticas', verificarToken, verificarRol('organizador'), obtenerEstadisticas);

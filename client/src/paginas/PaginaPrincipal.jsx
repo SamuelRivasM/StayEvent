@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Navbar from '../componentes/Navbar';
 import TarjetaEvento from '../componentes/TarjetaEvento';
+import ModalCompraTickets from '../componentes/ModalCompraTickets';
 import api from '../servicios/api';
 
 const CATEGORIAS = ['Conciertos', 'Festivales', 'Fiestas / Discoteca'];
@@ -30,6 +31,12 @@ const SLIDES = [
     },
 ];
 
+const ACENTO_CATEGORIA = {
+    'Conciertos':        { barra: 'bg-purple-500', texto: 'text-purple-400' },
+    'Festivales':        { barra: 'bg-amber-500',  texto: 'text-amber-400'  },
+    'Fiestas / Discoteca': { barra: 'bg-rose-500', texto: 'text-rose-400'  },
+};
+
 const FILTRO_PRECIO = [
     { label: 'Cualquier precio', value: '' },
     { label: 'Gratis', value: '0' },
@@ -47,6 +54,22 @@ const PaginaPrincipal = () => {
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState(null);
     const [filtros, setFiltros] = useState(FILTRO_INICIAL);
+    const [eventoSeleccionado, setEventoSeleccionado] = useState(null);
+    const [seleccionPendiente, setSeleccionPendiente] = useState(null);
+
+    // Restaurar flujo de compra tras redirect de login
+    useEffect(() => {
+        const pendiente = sessionStorage.getItem('stay_pending_purchase');
+        if (!pendiente) return;
+        try {
+            const datos = JSON.parse(pendiente);
+            sessionStorage.removeItem('stay_pending_purchase');
+            setEventoSeleccionado(datos.eventoId);
+            setSeleccionPendiente(datos);
+        } catch {
+            sessionStorage.removeItem('stay_pending_purchase');
+        }
+    }, []);
 
     // Carrusel automático
     useEffect(() => {
@@ -83,10 +106,17 @@ const PaginaPrincipal = () => {
             if (filtros.busqueda && !ev.titulo.toLowerCase().includes(filtros.busqueda.toLowerCase())) return false;
             if (filtros.categoria && ev.categoria !== filtros.categoria) return false;
             if (filtros.distrito && ev.distrito !== filtros.distrito) return false;
-            if (filtros.precioMax !== '' && Number(ev.precio) > Number(filtros.precioMax)) return false;
+            if (filtros.precioMax !== '' && ev.precio_min != null && Number(ev.precio_min) > Number(filtros.precioMax)) return false;
             return true;
         });
     }, [eventos, filtros]);
+
+    const eventosPorCategoria = useMemo(() =>
+        CATEGORIAS.map(cat => ({
+            categoria: cat,
+            eventos: eventosFiltrados.filter(ev => ev.categoria === cat),
+        })).filter(({ eventos }) => eventos.length > 0)
+    , [eventosFiltrados]);
 
     const hayFiltros = Object.values(filtros).some(v => v !== '');
     const setFiltro = (campo, valor) => setFiltros(f => ({ ...f, [campo]: valor }));
@@ -318,12 +348,36 @@ const PaginaPrincipal = () => {
                         </div>
                     )}
 
-                    {/* Galería de eventos */}
+                    {/* Galería de eventos por categoría */}
                     {!cargando && !error && eventosFiltrados.length > 0 && (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                            {eventosFiltrados.map(evento => (
-                                <TarjetaEvento key={evento.id} evento={evento} />
-                            ))}
+                        <div className="space-y-16">
+                            {eventosPorCategoria.map(({ categoria, eventos: evsCat }) => {
+                                const acento = ACENTO_CATEGORIA[categoria] || { barra: 'bg-gray-500', texto: 'text-gray-400' };
+                                return (
+                                    <div key={categoria}>
+                                        <div className="flex items-center gap-4 mb-6">
+                                            <div className={`w-1 h-8 shrink-0 ${acento.barra}`} />
+                                            <div>
+                                                <h3 className="font-display text-xl sm:text-2xl font-bold text-white leading-none">
+                                                    {categoria}
+                                                </h3>
+                                                <p className={`text-xs mt-1 ${acento.texto}`}>
+                                                    {evsCat.length} evento{evsCat.length !== 1 ? 's' : ''}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                                            {evsCat.map(evento => (
+                                                <TarjetaEvento
+                                                    key={evento.id}
+                                                    evento={evento}
+                                                    onClick={() => setEventoSeleccionado(evento.id)}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </div>
@@ -346,6 +400,18 @@ const PaginaPrincipal = () => {
                     to   { width: 100%; }
                 }
             `}</style>
+
+            {/* Modal compra de tickets */}
+            {eventoSeleccionado && (
+                <ModalCompraTickets
+                    eventoId={eventoSeleccionado}
+                    seleccionInicial={seleccionPendiente}
+                    onCerrar={() => {
+                        setEventoSeleccionado(null);
+                        setSeleccionPendiente(null);
+                    }}
+                />
+            )}
         </div>
     );
 };

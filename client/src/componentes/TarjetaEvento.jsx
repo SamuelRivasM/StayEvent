@@ -24,18 +24,26 @@ const formatearFecha = (fecha) => {
     });
 };
 
-const formatearPrecio = (precio) => {
-    const val = Number(precio);
-    if (!precio || val === 0) return 'Gratis';
-    return `S/. ${val % 1 === 0 ? val : val.toFixed(2)}`;
+const etiquetaPrecio = (precioMin) => {
+    if (precioMin === null || precioMin === undefined) return { texto: 'Ver precios', clase: 'text-gray-600' };
+    const val = Number(precioMin);
+    if (val === 0) return { texto: 'Gratis', clase: 'text-emerald-400' };
+    const str = `S/. ${val % 1 === 0 ? val : val.toFixed(2)}`;
+    return { texto: `Desde ${str}`, clase: 'text-white' };
 };
 
-const TarjetaEvento = ({ evento }) => {
+const TarjetaEvento = ({ evento, onClick }) => {
     const gradiente = GRADIENTE_CATEGORIA[evento.categoria] || 'from-gray-900 to-gray-950';
-    const esGratis = !evento.precio || Number(evento.precio) === 0;
+    const { texto, clase } = etiquetaPrecio(evento.precio_min);
 
     return (
-        <article className="group relative overflow-hidden cursor-pointer">
+        <article
+            className="group relative overflow-hidden cursor-pointer"
+            onClick={onClick}
+            role={onClick ? 'button' : undefined}
+            tabIndex={onClick ? 0 : undefined}
+            onKeyDown={onClick ? (e) => { if (e.key === 'Enter') onClick(); } : undefined}
+        >
             <div className="relative aspect-[3/4] overflow-hidden bg-gray-900">
 
                 {/* Imagen o gradiente de fondo */}
@@ -63,8 +71,8 @@ const TarjetaEvento = ({ evento }) => {
                     <span className="text-[10px] font-medium tracking-widest uppercase text-white/50 leading-none pt-0.5">
                         {evento.categoria}
                     </span>
-                    <span className={`text-xs font-bold leading-none ${esGratis ? 'text-emerald-400' : 'text-white'}`}>
-                        {formatearPrecio(evento.precio)}
+                    <span className={`text-xs font-bold leading-none ${clase}`}>
+                        {texto}
                     </span>
                 </div>
 

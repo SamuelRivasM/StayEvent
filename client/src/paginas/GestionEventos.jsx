@@ -6,9 +6,10 @@ const CATEGORIAS = ['Conciertos', 'Festivales', 'Fiestas / Discoteca'];
 
 const FORM_VACIO = {
     titulo: '', descripcion: '', categoria: '', fecha: '',
-    hora: '', distrito: '', lugar: '', precio: '', imagen_url: '', stock: '',
+    hora: '', distrito: '', lugar: '', imagen_url: '', imagen_mapa: '',
 };
 
+const ZONA_VACIA = { nombre: '', precio: '', stock: '' };
 const labelCls = 'block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5';
 const inputCls = 'w-full px-4 py-2.5 bg-white/[0.05] text-sm text-white placeholder-gray-600 border border-white/[0.08] focus:outline-none focus:border-purple-500/60 focus:ring-1 focus:ring-purple-500/30 transition-colors';
 const selectCls = 'w-full px-4 py-2.5 bg-gray-800/90 text-sm text-white border border-white/[0.08] focus:outline-none focus:border-purple-500/60 focus:ring-1 focus:ring-purple-500/30 transition-colors appearance-none cursor-pointer';
@@ -33,9 +34,12 @@ const KEYFRAMES = `
 `;
 
 const ANIM_OVERLAY = { animation: 'overlayIn 0.18s ease', willChange: 'opacity' };
-const ANIM_SLIDE = { animation: 'slideInRight 0.22s cubic-bezier(0.4, 0, 0.2, 1)', willChange: 'transform, opacity' };
 const ANIM_SCALE = { animation: 'fadeScaleIn 0.18s cubic-bezier(0.4, 0, 0.2, 1)', willChange: 'transform, opacity' };
 
+const fechaHoy = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 const Campo = React.memo(({ label, name, type = 'text', value, onChange, placeholder, ...rest }) => (
     <div>
         <label className={labelCls}>{label}</label>
@@ -59,6 +63,7 @@ const GestionEventos = () => {
     const [modalAbierto, setModalAbierto] = useState(false);
     const [eventoEditando, setEventoEditando] = useState(null);
     const [formulario, setFormulario] = useState(FORM_VACIO);
+    const [zonas, setZonas] = useState([]);
     const [guardando, setGuardando] = useState(false);
     const [errorModal, setErrorModal] = useState('');
 
@@ -73,6 +78,11 @@ const GestionEventos = () => {
     eventoEditandoRef.current = eventoEditando;
     const confirmandoRef = useRef(confirmando);
     confirmandoRef.current = confirmando;
+<<<<<<< HEAD
+=======
+    const zonasRef = useRef(zonas);
+    zonasRef.current = zonas;
+>>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
 
     const cargarDatos = useCallback(async () => {
         setCargando(true);
@@ -101,12 +111,20 @@ const GestionEventos = () => {
         setModalAbierto(false);
         setEventoEditando(null);
         setFormulario(FORM_VACIO);
+<<<<<<< HEAD
+=======
+        setZonas([]);
+>>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
         setErrorModal('');
     }, []);
 
     const abrirCrear = useCallback(() => {
         setEventoEditando(null);
         setFormulario(FORM_VACIO);
+<<<<<<< HEAD
+=======
+        setZonas([]);
+>>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
         setErrorModal('');
         setModalAbierto(true);
     }, []);
@@ -121,10 +139,21 @@ const GestionEventos = () => {
             hora: evento.hora || '',
             distrito: evento.distrito || '',
             lugar: evento.lugar || '',
+<<<<<<< HEAD
             precio: evento.precio?.toString() || '',
             imagen_url: evento.imagen_url || '',
             stock: evento.stock?.toString() || '',
         });
+=======
+            imagen_url: evento.imagen_url || '',
+            imagen_mapa: evento.imagen_mapa || '',
+        });
+        setZonas((evento.zonas || []).map(z => ({
+            nombre: z.nombre || '',
+            precio: z.precio?.toString() || '',
+            stock: z.stock?.toString() || '',
+        })));
+>>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
         setErrorModal('');
         setModalAbierto(true);
     }, []);
@@ -134,6 +163,7 @@ const GestionEventos = () => {
         setFormulario(prev => ({ ...prev, [name]: value }));
     }, []);
 
+<<<<<<< HEAD
     const manejarGuardar = useCallback(async (e) => {
         e.preventDefault();
         setErrorModal('');
@@ -144,6 +174,51 @@ const GestionEventos = () => {
                 mostrarToast('Evento actualizado correctamente.');
             } else {
                 await api.post('/eventos', formularioRef.current);
+=======
+    const agregarZona = useCallback(() => {
+        setZonas(prev => prev.length < 5 ? [...prev, { ...ZONA_VACIA }] : prev);
+    }, []);
+
+    const actualizarZona = useCallback((idx, field, value) => {
+        setZonas(prev => prev.map((z, i) => i === idx ? { ...z, [field]: value } : z));
+    }, []);
+
+    const eliminarZona = useCallback((idx) => {
+        setZonas(prev => prev.filter((_, i) => i !== idx));
+    }, []);
+
+    const manejarGuardar = useCallback(async (e) => {
+        e.preventDefault();
+        setErrorModal('');
+
+        const hoy = fechaHoy();
+        if (formularioRef.current.fecha && formularioRef.current.fecha < hoy) {
+            setErrorModal('La fecha del evento no puede ser anterior a hoy.');
+            return;
+        }
+
+        for (const zona of zonasRef.current) {
+            const precio = parseFloat(zona.precio);
+            const stock = parseInt(zona.stock, 10);
+            if (isNaN(precio) || precio <= 0) {
+                setErrorModal('El precio de cada zona debe ser mayor a 0.');
+                return;
+            }
+            if (isNaN(stock) || stock <= 0) {
+                setErrorModal('La capacidad de cada zona debe ser mayor a 0.');
+                return;
+            }
+        }
+
+        setGuardando(true);
+        try {
+            const payload = { ...formularioRef.current, zonas: zonasRef.current };
+            if (eventoEditandoRef.current) {
+                await api.put(`/eventos/${eventoEditandoRef.current.id}`, payload);
+                mostrarToast('Evento actualizado correctamente.');
+            } else {
+                await api.post('/eventos', payload);
+>>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
                 mostrarToast('Evento creado correctamente.');
             }
             cerrarModal();
@@ -155,7 +230,20 @@ const GestionEventos = () => {
         }
     }, [cerrarModal, cargarDatos, mostrarToast]);
 
+<<<<<<< HEAD
     const confirmarCambioEstado = useCallback((evento) => setConfirmando({ tipo: 'estado', evento }), []);
+=======
+    const confirmarCambioEstado = useCallback((evento) => {
+        if (!evento.activo) {
+            const fechaEvento = evento.fecha ? evento.fecha.split('T')[0] : '';
+            if (fechaEvento < fechaHoy()) {
+                setErrorPagina('No se puede activar un evento cuya fecha ya pasó.');
+                return;
+            }
+        }
+        setConfirmando({ tipo: 'estado', evento });
+    }, []);
+>>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
     const confirmarEliminar = useCallback((evento) => setConfirmando({ tipo: 'eliminar', evento }), []);
     const cancelarConfirmacion = useCallback(() => setConfirmando(null), []);
 
@@ -179,10 +267,15 @@ const GestionEventos = () => {
     return (
         <div className="min-h-screen bg-gray-950 text-white font-sans">
 
+<<<<<<< HEAD
             {/* Keyframes */}
             <style>{KEYFRAMES}</style>
 
             {/* Fondo */}
+=======
+            <style>{KEYFRAMES}</style>
+
+>>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
             <div
                 className="fixed inset-0 pointer-events-none"
                 style={{
@@ -201,7 +294,10 @@ const GestionEventos = () => {
             <main className="relative pt-24 pb-16 px-4 sm:px-6 lg:px-8" style={{ zIndex: 1 }}>
                 <div className="max-w-7xl mx-auto">
 
+<<<<<<< HEAD
                     {/* Encabezado */}
+=======
+>>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
                     <div className="mb-10 flex items-end justify-between gap-4">
                         <div>
                             <p className="text-xs text-gray-600 uppercase tracking-[0.2em] mb-2">Panel de Organizador</p>
@@ -221,7 +317,10 @@ const GestionEventos = () => {
                         </button>
                     </div>
 
+<<<<<<< HEAD
                     {/* Error página */}
+=======
+>>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
                     {errorPagina && (
                         <div className="bg-red-500/[0.08] border border-red-500/20 text-red-400 px-4 py-3 text-sm mb-6 flex items-center justify-between gap-4">
                             <span>{errorPagina}</span>
@@ -229,7 +328,10 @@ const GestionEventos = () => {
                         </div>
                     )}
 
+<<<<<<< HEAD
                     {/* Tabla */}
+=======
+>>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
                     <div className="bg-white/[0.02] border border-white/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.4)]">
                         {cargando ? (
                             <div className="flex items-center justify-center py-32">
@@ -259,8 +361,12 @@ const GestionEventos = () => {
                                             <th className="text-left px-5 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest">Evento</th>
                                             <th className="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest hidden sm:table-cell">Fecha</th>
                                             <th className="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest hidden md:table-cell">Categoría</th>
+<<<<<<< HEAD
                                             <th className="text-right px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest hidden md:table-cell">Precio</th>
                                             <th className="text-right px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest hidden lg:table-cell">Stock</th>
+=======
+                                            <th className="text-right px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest hidden md:table-cell">Zonas</th>
+>>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
                                             <th className="text-center px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest">Estado</th>
                                             <th className="text-right px-5 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest">Acciones</th>
                                         </tr>
@@ -335,19 +441,105 @@ const GestionEventos = () => {
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
+<<<<<<< HEAD
                                 <Campo label="Fecha *" name="fecha" type="date" value={formulario.fecha} onChange={manejarCambio} required />
+=======
+                                <Campo label="Fecha *" name="fecha" type="date" value={formulario.fecha} onChange={manejarCambio} required min={fechaHoy()} />
+>>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
                                 <Campo label="Hora *" name="hora" type="time" value={formulario.hora} onChange={manejarCambio} required />
                             </div>
 
                             <Campo label="Lugar *" name="lugar" value={formulario.lugar} onChange={manejarCambio} placeholder="Nombre del local o venue" required />
                             <Campo label="Distrito" name="distrito" value={formulario.distrito} onChange={manejarCambio} placeholder="Ej: Miraflores" />
 
+<<<<<<< HEAD
                             <div className="grid grid-cols-2 gap-3">
                                 <Campo label="Precio (S/.) *" name="precio" type="number" min="0" step="0.01" value={formulario.precio} onChange={manejarCambio} placeholder="0.00" required />
                                 <Campo label="Stock" name="stock" type="number" min="0" value={formulario.stock} onChange={manejarCambio} placeholder="0" />
                             </div>
 
                             <Campo label="URL de imagen" name="imagen_url" value={formulario.imagen_url} onChange={manejarCambio} placeholder="https://..." />
+=======
+                            {/* Zonas del evento */}
+                            <div>
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className={labelCls} style={{ marginBottom: 0 }}>Zonas del evento</label>
+                                    <button
+                                        type="button"
+                                        onClick={agregarZona}
+                                        disabled={zonas.length >= 5}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-purple-500/30 text-purple-400 hover:bg-purple-500/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                    >
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                        </svg>
+                                        Agregar zona
+                                    </button>
+                                </div>
+
+                                {zonas.length === 0 ? (
+                                    <p className="text-xs text-gray-600 py-3 border border-dashed border-white/[0.06] text-center">
+                                        Sin zonas definidas
+                                    </p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        <div className="grid grid-cols-[1fr_88px_72px_32px] gap-2 px-1">
+                                            <span className="text-[10px] text-gray-600 uppercase tracking-widest">Nombre</span>
+                                            <span className="text-[10px] text-gray-600 uppercase tracking-widest">Precio S/.</span>
+                                            <span className="text-[10px] text-gray-600 uppercase tracking-widest">Cap.</span>
+                                            <span />
+                                        </div>
+                                        {zonas.map((zona, idx) => (
+                                            <div key={idx} className="grid grid-cols-[1fr_88px_72px_32px] gap-2 items-center">
+                                                <input
+                                                    type="text"
+                                                    value={zona.nombre}
+                                                    onChange={e => actualizarZona(idx, 'nombre', e.target.value)}
+                                                    placeholder="Ej: VIP"
+                                                    maxLength={50}
+                                                    className={inputCls}
+                                                />
+                                                <input
+                                                    type="number"
+                                                    value={zona.precio}
+                                                    onChange={e => actualizarZona(idx, 'precio', e.target.value)}
+                                                    onKeyDown={e => e.key === '-' && e.preventDefault()}
+                                                    placeholder="0.00"
+                                                    min="0.01"
+                                                    step="0.01"
+                                                    className={inputCls}
+                                                />
+                                                <input
+                                                    type="number"
+                                                    value={zona.stock}
+                                                    onChange={e => actualizarZona(idx, 'stock', e.target.value)}
+                                                    onKeyDown={e => e.key === '-' && e.preventDefault()}
+                                                    placeholder="1"
+                                                    min="1"
+                                                    className={inputCls}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => eliminarZona(idx)}
+                                                    className="flex items-center justify-center w-8 h-8 text-gray-600 hover:text-red-400 hover:bg-red-500/[0.06] transition-colors"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {zonas.length >= 5 && (
+                                    <p className="text-xs text-yellow-600/70 mt-1.5">Máximo 5 zonas por evento.</p>
+                                )}
+                            </div>
+
+                            <Campo label="URL de imagen" name="imagen_url" value={formulario.imagen_url} onChange={manejarCambio} placeholder="https://..." />
+                            <Campo label="URL de imagen del mapa" name="imagen_mapa" value={formulario.imagen_mapa} onChange={manejarCambio} placeholder="https://..." />
+>>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
 
                             <div>
                                 <label className={labelCls}>Descripción</label>
@@ -425,7 +617,11 @@ const GestionEventos = () => {
                 </div>
             )}
 
+<<<<<<< HEAD
             {/* Toast de confirmación */}
+=======
+            {/* Toast */}
+>>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
             {toast && (
                 <div
                     className="fixed bottom-6 right-6 z-[60] flex items-center gap-3 px-4 py-3 bg-gray-900 border border-white/[0.09] shadow-[0_8px_24px_rgba(0,0,0,0.5)] text-sm"
@@ -451,11 +647,19 @@ const FilaEvento = React.memo(({ evento, onEditar, onCambioEstado, onEliminar })
         <td className="px-4 py-4 hidden md:table-cell">
             <span className="text-xs text-gray-600 border border-white/[0.08] px-2 py-0.5">{evento.categoria}</span>
         </td>
+<<<<<<< HEAD
         <td className="px-4 py-4 text-right text-gray-500 text-xs hidden md:table-cell">
             {evento.precio != null ? `S/. ${Number(evento.precio).toFixed(2)}` : '—'}
         </td>
         <td className="px-4 py-4 text-right text-gray-500 text-xs hidden lg:table-cell">
             {evento.stock ?? '—'}
+=======
+        <td className="px-4 py-4 text-right text-xs hidden md:table-cell">
+            {evento.zonas && evento.zonas.length > 0
+                ? <span className="text-purple-400/80">{evento.zonas.length} zona{evento.zonas.length !== 1 ? 's' : ''}</span>
+                : <span className="text-gray-700">—</span>
+            }
+>>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
         </td>
         <td className="px-4 py-4 text-center">
             <button
