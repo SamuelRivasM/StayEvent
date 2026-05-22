@@ -197,35 +197,35 @@ const Navbar = () => {
                                     Configurar perfil
                                 </Link>
 >>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
-                                <button
-                                    onClick={handleCerrarSesion}
-                                    className="w-full text-left px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-all"
-                                >
-                                    Cerrar sesión
-                                </button>
+    <button
+        onClick={handleCerrarSesion}
+        className="w-full text-left px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+    >
+        Cerrar sesión
+    </button>
                             </>
                         ) : (
-                            <>
-                                <Link
-                                    to="/registro"
-                                    onClick={() => setMenuAbierto(false)}
-                                    className="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-all"
-                                >
-                                    Registrarse
-                                </Link>
-                                <Link
-                                    to="/login"
-                                    onClick={() => setMenuAbierto(false)}
-                                    className="block px-3 py-2 text-sm font-semibold text-white bg-purple-600 text-center"
-                                >
-                                    Iniciar sesión
-                                </Link>
-                            </>
-                        )}
-                    </div>
+    <>
+        <Link
+            to="/registro"
+            onClick={() => setMenuAbierto(false)}
+            className="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+        >
+            Registrarse
+        </Link>
+        <Link
+            to="/login"
+            onClick={() => setMenuAbierto(false)}
+            className="block px-3 py-2 text-sm font-semibold text-white bg-purple-600 text-center"
+        >
+            Iniciar sesión
+        </Link>
+    </>
+)}
+                    </div >
                 )}
-            </div>
-        </nav>
+            </div >
+        </nav >
     );
 };
 

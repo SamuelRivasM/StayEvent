@@ -125,7 +125,7 @@ const obtenerDetalleEvento = async (req, res) => {
 
         const [eventos] = await pool.query(
             `SELECT id, titulo, descripcion, categoria, fecha, hora,
-                    distrito, lugar, direccion, imagen_url, imagen_mapa
+            distrito, lugar, direccion, imagen_url, imagen_mapa
              FROM eventos
              WHERE id = ? AND activo = 1 AND eliminado = 0`,
             [eventoId]
@@ -155,9 +155,9 @@ const obtenerEstadisticas = async (req, res) => {
     try {
         const [statsRows] = await pool.query(
             `SELECT COUNT(*) AS total,
-                    SUM(activo = 1) AS activos,
-                    SUM(activo = 0) AS inactivos,
-                    SUM(fecha >= CURDATE() AND activo = 1) AS proximos
+            SUM(activo = 1) AS activos,
+            SUM(activo = 0) AS inactivos,
+            SUM(fecha >= CURDATE() AND activo = 1) AS proximos
 >>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
              FROM eventos
              WHERE organizador_id = ? AND eliminado = 0`,
@@ -187,7 +187,7 @@ const obtenerEventosOrganizador = async (req, res) => {
         const [eventos] = await pool.query(
             `SELECT id, titulo, descripcion, categoria, fecha, hora, distrito, lugar,
 <<<<<<< HEAD
-                    precio, imagen_url, stock, activo, created_at
+            precio, imagen_url, stock, activo, created_at
 =======
                     imagen_url, imagen_mapa, activo, created_at
 >>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
@@ -278,16 +278,16 @@ const crearEvento = async (req, res) => {
 
         const [resultado] = await pool.query(
             `INSERT INTO eventos
-                (titulo, descripcion, categoria, fecha, hora, distrito, lugar, precio, imagen_url, stock, organizador_id, activo, eliminado)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)`,
+            (titulo, descripcion, categoria, fecha, hora, distrito, lugar, precio, imagen_url, stock, organizador_id, activo, eliminado)
+             VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)`,
             [tituloSanitizado, descripcionSanitizada, categoria, fecha, hora, distritoSanitizado || null, lugarSanitizado, precioNum, imagenSanitizada || null, stockNum, req.usuario.id]
         );
 
 =======
         const [resultado] = await pool.query(
             `INSERT INTO eventos
-                (titulo, descripcion, categoria, fecha, hora, distrito, lugar, imagen_url, imagen_mapa, organizador_id, activo, eliminado)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)`,
+            (titulo, descripcion, categoria, fecha, hora, distrito, lugar, imagen_url, imagen_mapa, organizador_id, activo, eliminado)
+             VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)`,
             [tituloSanitizado, descripcionSanitizada, categoria, fecha, hora, distritoSanitizado || null, lugarSanitizado, imagenSanitizada || null, imagenMapaSanitizada || null, req.usuario.id]
         );
 
@@ -373,8 +373,8 @@ const actualizarEvento = async (req, res) => {
             `UPDATE eventos
              SET titulo = ?, descripcion = ?, categoria = ?, fecha = ?, hora = ?,
 <<<<<<< HEAD
-                 distrito = ?, lugar = ?, precio = ?, imagen_url = ?, stock = ?
-             WHERE id = ? AND organizador_id = ?`,
+            distrito = ?, lugar = ?, precio = ?, imagen_url = ?, stock = ?
+                WHERE id = ? AND organizador_id = ? `,
             [tituloSanitizado, descripcionSanitizada, categoria, fecha, hora, distritoSanitizado || null, lugarSanitizado, precioNum, imagenSanitizada || null, stockNum, eventoId, req.usuario.id]
         );
 
