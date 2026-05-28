@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 const GRADIENTE_CATEGORIA = {
     'Conciertos': 'from-violet-950 via-purple-900 to-gray-900',
@@ -98,6 +99,24 @@ const TarjetaEvento = ({ evento, onClick }) => {
             </div>
         </article>
     );
+};
+
+TarjetaEvento.propTypes = {
+    evento: PropTypes.shape({
+        id: PropTypes.number,
+        titulo: PropTypes.string.isRequired,
+        categoria: PropTypes.string,
+        fecha: PropTypes.string,
+        hora: PropTypes.string,
+        distrito: PropTypes.string,
+        imagen_url: PropTypes.string,
+        precio_min: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }).isRequired,
+    onClick: PropTypes.func,
+};
+
+TarjetaEvento.defaultProps = {
+    onClick: null,
 };
 
 export default TarjetaEvento;

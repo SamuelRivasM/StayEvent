@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { testConnection, pool } = require('./config/db');
+const { validacionMiddleware } = require('./middlewares/validacionMiddleware');
 const authRutas = require('./rutas/authRutas');
 const eventosRutas = require('./rutas/eventosRutas');
 const comprasRutas = require('./rutas/comprasRutas');
@@ -16,8 +17,8 @@ const PORT = process.env.PORT || 5000;
 // cabeceras de seguridad HTTP
 app.use(helmet());
 
-// CORS: solo permite el origen del frontend
-const ORIGENES_PERMITIDOS = ['http://localhost:3000'];
+// CORS: lee el origen desde variables de entorno
+const ORIGENES_PERMITIDOS = (process.env.CORS_ORIGIN || 'http://localhost:3000').split(',').map(o => o.trim());
 
 app.use(cors({
     origin: (origin, callback) => {
@@ -45,6 +46,9 @@ const limitadorGlobal = rateLimit({
     message: { mensaje: 'Demasiadas solicitudes. Intenta más tarde.' },
 });
 app.use(limitadorGlobal);
+
+// Validación de entrada global
+app.use(validacionMiddleware);
 
 // Rutas
 app.use('/api/auth', authRutas);

@@ -286,4 +286,64 @@ const cerrarSesion = async (req, res) => {
     }
 };
 
-module.exports = { registrar, iniciarSesion, obtenerPerfil, cerrarSesion };
+const recuperarPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        // Validación de tipo
+        if (typeof email !== 'string') {
+            return res.status(400).json({ mensaje: 'Email inválido.' });
+        }
+
+        const emailNormalizado = email.trim().toLowerCase();
+
+        // Validación
+        if (!emailNormalizado) {
+            return res.status(400).json({ mensaje: 'El email es requerido.' });
+        }
+
+        if (!REGEX_EMAIL.test(emailNormalizado)) {
+            return res.status(400).json({ mensaje: 'Formato de email inválido.' });
+        }
+
+        if (emailNormalizado.length > MAX_EMAIL_LENGTH) {
+            return res.status(400).json({ mensaje: 'Email inválido.' });
+        }
+
+        // Buscar usuario
+        const [usuarios] = await pool.query(
+            'SELECT id, email FROM usuarios WHERE email = ?',
+            [emailNormalizado]
+        );
+
+        // Por seguridad, siempre responder igual aunque no exista el usuario
+        if (usuarios.length === 0) {
+            return res.status(200).json({ mensaje: 'Si el email existe, recibirás instrucciones de recuperación.' });
+        }
+
+        // Generar token de recuperación temporal (válido por 1 hora)
+        const tokenRecuperacion = crypto.randomBytes(32).toString('hex');
+        const tiempoExpiracion = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+
+        // Guardar token en base de datos
+        try {
+            await pool.execute(
+                'UPDATE usuarios SET token_recuperacion = ?, expira_token_en = ? WHERE id = ?',
+                [tokenRecuperacion, tiempoExpiracion, usuarios[0].id]
+            );
+        } catch (dbError) {
+            // Si la tabla no tiene estas columnas, solo responder exitosamente
+            console.warn('Advertencia: Columnas de recuperación no existen en usuarios');
+        }
+
+        // TODO: En producción, enviar email con link: /reset-password?token=tokenRecuperacion
+        console.log(`Token de recuperación para ${emailNormalizado}: ${tokenRecuperacion}`);
+
+        return res.status(200).json({ mensaje: 'Si el email existe, recibirás instrucciones de recuperación.' });
+    } catch (error) {
+        console.error('Error en recuperación de password:', error.message);
+        return res.status(500).json({ mensaje: 'Error interno del servidor.' });
+    }
+};
+
+module.exports = { registrar, iniciarSesion, obtenerPerfil, cerrarSesion, recuperarPassword };

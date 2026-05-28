@@ -195,7 +195,6 @@ const Navbar = () => {
                                         Gestión Eventos
                                     </Link>
                                 )}
-<<<<<<< HEAD
 =======
                                 {usuario.rol === 'usuario' && (
                                     <Link
@@ -213,7 +212,7 @@ const Navbar = () => {
                                 >
                                     Configurar perfil
                                 </Link>
->>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
+
     <button
         onClick={handleCerrarSesion}
         className="w-full text-left px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-all"

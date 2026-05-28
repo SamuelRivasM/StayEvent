@@ -43,6 +43,7 @@ const insertarZonas = async (eventoId, zonas) => {
         [values]
     );
 };
+
 // GET /api/eventos — público
 const obtenerEventos = async (req, res) => {
     try {
@@ -114,58 +115,10 @@ const obtenerEstadisticas = async (req, res) => {
                     SUM(activo = 1) AS activos,
                     SUM(activo = 0) AS inactivos,
                     SUM(fecha >= CURDATE() AND activo = 1) AS proximos
-=======
-// GET /api/eventos/:id/detalle — público
-const obtenerDetalleEvento = async (req, res) => {
-    try {
-        const eventoId = parseInt(req.params.id, 10);
-        if (!Number.isInteger(eventoId) || eventoId <= 0) {
-            return res.status(400).json({ mensaje: 'ID de evento inválido.' });
-        }
-
-        const [eventos] = await pool.query(
-            `SELECT id, titulo, descripcion, categoria, fecha, hora,
-            distrito, lugar, direccion, imagen_url, imagen_mapa
-             FROM eventos
-             WHERE id = ? AND activo = 1 AND eliminado = 0`,
-            [eventoId]
-        );
-
-        if (eventos.length === 0) {
-            return res.status(404).json({ mensaje: 'Evento no encontrado.' });
-        }
-
-        const [zonas] = await pool.query(
-            `SELECT id, nombre, precio, stock
-             FROM zonas_evento
-             WHERE evento_id = ? AND activo = 1
-             ORDER BY precio ASC`,
-            [eventoId]
-        );
-
-        res.json({ evento: eventos[0], zonas });
-    } catch (error) {
-        console.error('Error al obtener detalle del evento:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor.' });
-    }
-};
-
-// GET /api/eventos/estadisticas — organizador autenticado
-const obtenerEstadisticas = async (req, res) => {
-    try {
-        const [statsRows] = await pool.query(
-            `SELECT COUNT(*) AS total,
-            SUM(activo = 1) AS activos,
-            SUM(activo = 0) AS inactivos,
-            SUM(fecha >= CURDATE() AND activo = 1) AS proximos
->>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
              FROM eventos
              WHERE organizador_id = ? AND eliminado = 0`,
             [req.usuario.id]
         );
-<<<<<<< HEAD
-        res.json({ estadisticas: rows[0] });
-=======
         const [stockRows] = await pool.query(
             `SELECT COALESCE(SUM(z.stock), 0) AS stock_total
              FROM zonas_evento z
@@ -174,7 +127,6 @@ const obtenerEstadisticas = async (req, res) => {
             [req.usuario.id]
         );
         res.json({ estadisticas: { ...statsRows[0], stock_total: stockRows[0].stock_total } });
->>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
     } catch (error) {
         console.error('Error al obtener estadísticas:', error);
         res.status(500).json({ mensaje: 'Error interno del servidor.' });
@@ -186,18 +138,12 @@ const obtenerEventosOrganizador = async (req, res) => {
     try {
         const [eventos] = await pool.query(
             `SELECT id, titulo, descripcion, categoria, fecha, hora, distrito, lugar,
-<<<<<<< HEAD
-            precio, imagen_url, stock, activo, created_at
-=======
                     imagen_url, imagen_mapa, activo, created_at
->>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
              FROM eventos
              WHERE organizador_id = ? AND eliminado = 0
              ORDER BY fecha DESC`,
             [req.usuario.id]
         );
-<<<<<<< HEAD
-=======
 
         if (eventos.length > 0) {
             const ids = eventos.map(e => e.id);
@@ -213,7 +159,6 @@ const obtenerEventosOrganizador = async (req, res) => {
             eventos.forEach(e => { e.zonas = zonasPorEvento[e.id] || []; });
         }
 
->>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
         res.json({ eventos });
     } catch (error) {
         console.error('Error al obtener eventos del organizador:', error);
@@ -224,25 +169,14 @@ const obtenerEventosOrganizador = async (req, res) => {
 // POST /api/eventos — organizador
 const crearEvento = async (req, res) => {
     try {
-<<<<<<< HEAD
-        const { titulo, descripcion, categoria, fecha, hora, distrito, lugar, precio, imagen_url, stock } = req.body;
-
-        if (!titulo || !categoria || !fecha || !hora || !lugar || precio === undefined) {
-            return res.status(400).json({ mensaje: 'Título, categoría, fecha, hora, lugar y precio son obligatorios.' });
-=======
         const { titulo, descripcion, categoria, fecha, hora, distrito, lugar, imagen_url, imagen_mapa, zonas } = req.body;
 
         if (!titulo || !categoria || !fecha || !hora || !lugar) {
             return res.status(400).json({ mensaje: 'Título, categoría, fecha, hora y lugar son obligatorios.' });
->>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
         }
         if (!CATEGORIAS_VALIDAS.has(categoria)) {
             return res.status(400).json({ mensaje: 'Categoría no válida.' });
         }
-<<<<<<< HEAD
-
-        const tituloSanitizado = sanitizarTexto(titulo, 150);
-=======
         if (!esFechaValida(fecha)) {
             return res.status(400).json({ mensaje: 'La fecha del evento no puede ser anterior a hoy.' });
         }
@@ -251,39 +185,16 @@ const crearEvento = async (req, res) => {
         if (errorZonas) return res.status(400).json({ mensaje: errorZonas });
 
         const tituloSanitizado = sanitizarTexto(titulo, 200);
->>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
         const lugarSanitizado = sanitizarTexto(lugar, 200);
         const distritoSanitizado = sanitizarTexto(distrito || '', 100);
         const descripcionSanitizada = sanitizarTexto(descripcion || '', 2000);
         const imagenSanitizada = sanitizarTexto(imagen_url || '', 500);
-<<<<<<< HEAD
-=======
         const imagenMapaSanitizada = sanitizarTexto(imagen_mapa || '', 500);
->>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
 
         if (!tituloSanitizado || !lugarSanitizado) {
             return res.status(400).json({ mensaje: 'Título y lugar son requeridos.' });
         }
 
-<<<<<<< HEAD
-        const precioNum = parseFloat(precio);
-        const stockNum = parseInt(stock || 0, 10);
-
-        if (isNaN(precioNum) || precioNum < 0) {
-            return res.status(400).json({ mensaje: 'El precio debe ser un número positivo.' });
-        }
-        if (isNaN(stockNum) || stockNum < 0) {
-            return res.status(400).json({ mensaje: 'El stock debe ser un número positivo.' });
-        }
-
-        const [resultado] = await pool.query(
-            `INSERT INTO eventos
-            (titulo, descripcion, categoria, fecha, hora, distrito, lugar, precio, imagen_url, stock, organizador_id, activo, eliminado)
-             VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)`,
-            [tituloSanitizado, descripcionSanitizada, categoria, fecha, hora, distritoSanitizado || null, lugarSanitizado, precioNum, imagenSanitizada || null, stockNum, req.usuario.id]
-        );
-
-=======
         const [resultado] = await pool.query(
             `INSERT INTO eventos
             (titulo, descripcion, categoria, fecha, hora, distrito, lugar, imagen_url, imagen_mapa, organizador_id, activo, eliminado)
@@ -293,7 +204,6 @@ const crearEvento = async (req, res) => {
 
         await insertarZonas(resultado.insertId, zonas);
 
->>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
         res.status(201).json({ mensaje: 'Evento creado correctamente.', id: resultado.insertId });
     } catch (error) {
         console.error('Error al crear evento:', error);
@@ -317,25 +227,14 @@ const actualizarEvento = async (req, res) => {
             return res.status(404).json({ mensaje: 'Evento no encontrado.' });
         }
 
-<<<<<<< HEAD
-        const { titulo, descripcion, categoria, fecha, hora, distrito, lugar, precio, imagen_url, stock } = req.body;
-
-        if (!titulo || !categoria || !fecha || !hora || !lugar || precio === undefined) {
-            return res.status(400).json({ mensaje: 'Título, categoría, fecha, hora, lugar y precio son obligatorios.' });
-=======
         const { titulo, descripcion, categoria, fecha, hora, distrito, lugar, imagen_url, imagen_mapa, zonas } = req.body;
 
         if (!titulo || !categoria || !fecha || !hora || !lugar) {
             return res.status(400).json({ mensaje: 'Título, categoría, fecha, hora y lugar son obligatorios.' });
->>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
         }
         if (!CATEGORIAS_VALIDAS.has(categoria)) {
             return res.status(400).json({ mensaje: 'Categoría no válida.' });
         }
-<<<<<<< HEAD
-
-        const tituloSanitizado = sanitizarTexto(titulo, 150);
-=======
         if (!esFechaValida(fecha)) {
             return res.status(400).json({ mensaje: 'La fecha del evento no puede ser anterior a hoy.' });
         }
@@ -344,41 +243,19 @@ const actualizarEvento = async (req, res) => {
         if (errorZonas) return res.status(400).json({ mensaje: errorZonas });
 
         const tituloSanitizado = sanitizarTexto(titulo, 200);
->>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
         const lugarSanitizado = sanitizarTexto(lugar, 200);
         const distritoSanitizado = sanitizarTexto(distrito || '', 100);
         const descripcionSanitizada = sanitizarTexto(descripcion || '', 2000);
         const imagenSanitizada = sanitizarTexto(imagen_url || '', 500);
-<<<<<<< HEAD
-        const precioNum = parseFloat(precio);
-        const stockNum = parseInt(stock || 0, 10);
-=======
         const imagenMapaSanitizada = sanitizarTexto(imagen_mapa || '', 500);
->>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
 
         if (!tituloSanitizado || !lugarSanitizado) {
             return res.status(400).json({ mensaje: 'Título y lugar son requeridos.' });
         }
-<<<<<<< HEAD
-        if (isNaN(precioNum) || precioNum < 0) {
-            return res.status(400).json({ mensaje: 'El precio debe ser un número positivo.' });
-        }
-        if (isNaN(stockNum) || stockNum < 0) {
-            return res.status(400).json({ mensaje: 'El stock debe ser un número positivo.' });
-        }
-=======
->>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
 
         await pool.query(
             `UPDATE eventos
              SET titulo = ?, descripcion = ?, categoria = ?, fecha = ?, hora = ?,
-<<<<<<< HEAD
-            distrito = ?, lugar = ?, precio = ?, imagen_url = ?, stock = ?
-                WHERE id = ? AND organizador_id = ? `,
-            [tituloSanitizado, descripcionSanitizada, categoria, fecha, hora, distritoSanitizado || null, lugarSanitizado, precioNum, imagenSanitizada || null, stockNum, eventoId, req.usuario.id]
-        );
-
-=======
                  distrito = ?, lugar = ?, imagen_url = ?, imagen_mapa = ?
              WHERE id = ? AND organizador_id = ?`,
             [tituloSanitizado, descripcionSanitizada, categoria, fecha, hora, distritoSanitizado || null, lugarSanitizado, imagenSanitizada || null, imagenMapaSanitizada || null, eventoId, req.usuario.id]
@@ -387,7 +264,6 @@ const actualizarEvento = async (req, res) => {
         await pool.query('DELETE FROM zonas_evento WHERE evento_id = ?', [eventoId]);
         await insertarZonas(eventoId, zonas);
 
->>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
         res.json({ mensaje: 'Evento actualizado correctamente.' });
     } catch (error) {
         console.error('Error al actualizar evento:', error);
@@ -404,11 +280,7 @@ const cambiarEstadoEvento = async (req, res) => {
         }
 
         const [filas] = await pool.query(
-<<<<<<< HEAD
-            'SELECT id, activo FROM eventos WHERE id = ? AND organizador_id = ? AND eliminado = 0',
-=======
             'SELECT id, activo, (fecha >= CURDATE()) AS fecha_futura FROM eventos WHERE id = ? AND organizador_id = ? AND eliminado = 0',
->>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
             [eventoId, req.usuario.id]
         );
         if (filas.length === 0) {
@@ -416,12 +288,9 @@ const cambiarEstadoEvento = async (req, res) => {
         }
 
         const nuevoEstado = filas[0].activo ? 0 : 1;
-<<<<<<< HEAD
-=======
         if (nuevoEstado === 1 && !filas[0].fecha_futura) {
             return res.status(400).json({ mensaje: 'No se puede activar un evento cuya fecha ya pasó.' });
         }
->>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
         await pool.query(
             'UPDATE eventos SET activo = ? WHERE id = ? AND organizador_id = ?',
             [nuevoEstado, eventoId, req.usuario.id]
@@ -464,10 +333,7 @@ const eliminarEvento = async (req, res) => {
 
 module.exports = {
     obtenerEventos,
-<<<<<<< HEAD
-=======
     obtenerDetalleEvento,
->>>>>>> cf84332210dd236dd74a2f50f5d7a981750f0bf2
     obtenerEstadisticas,
     obtenerEventosOrganizador,
     crearEvento,

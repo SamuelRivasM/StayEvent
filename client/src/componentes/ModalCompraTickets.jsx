@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../servicios/api';
@@ -667,5 +668,18 @@ const ZonaBtn = React.memo(({ zona, agotado, activa, onSeleccionar }) => (
         </div>
     </button>
 ));
+
+ModalCompraTickets.propTypes = {
+    eventoId: PropTypes.number.isRequired,
+    onCerrar: PropTypes.func.isRequired,
+    seleccionInicial: PropTypes.shape({
+        zonaId: PropTypes.number,
+        cantidad: PropTypes.number,
+    }),
+};
+
+ModalCompraTickets.defaultProps = {
+    seleccionInicial: null,
+};
 
 export default ModalCompraTickets;
