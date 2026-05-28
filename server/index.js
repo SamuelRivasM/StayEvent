@@ -8,6 +8,7 @@ const authRutas = require('./rutas/authRutas');
 const eventosRutas = require('./rutas/eventosRutas');
 const comprasRutas = require('./rutas/comprasRutas');
 const usuariosRutas = require('./rutas/usuariosRutas');
+const adminRutas = require('./rutas/adminRutas');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -50,6 +51,7 @@ app.use('/api/auth', authRutas);
 app.use('/api/eventos', eventosRutas);
 app.use('/api/compras', comprasRutas);
 app.use('/api/usuarios', usuariosRutas);
+app.use('/api/admin', adminRutas);
 
 // Health check
 app.get('/api/health', (req, res) => {

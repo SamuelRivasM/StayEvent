@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../servicios/api';
 
 const RUTA_POR_ROL = {
-    admin: '/admin',
+    admin: '/',
     usuario: '/',
     organizador: '/',
 };
@@ -47,32 +47,6 @@ const IconoAlerta = () => (
             d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
             clipRule="evenodd" />
     </svg>
-);
-
-// Componente reutilizable de input
-
-const CampoInput = ({ id, label, type, name, value, onChange, placeholder, autoComplete, children }) => (
-    <div>
-        <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1.5">
-            {label}
-        </label>
-        <div className="relative">
-            {children}
-            <input
-                id={id}
-                type={type}
-                name={name}
-                value={value}
-                onChange={onChange}
-                required
-                autoComplete={autoComplete}
-                placeholder={placeholder}
-                className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50
-                           hover:bg-white focus:bg-white focus:outline-none focus:ring-2
-                           focus:ring-purple-500 focus:border-transparent transition-colors"
-            />
-        </div>
-    </div>
 );
 
 // Componente principal

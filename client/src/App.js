@@ -2,14 +2,18 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import RutaPrivada from './componentes/RutaPrivada';
+import AdminLayout from './componentes/AdminLayout';
 import PaginaPrincipal from './paginas/PaginaPrincipal';
 import Login from './paginas/Login';
 import Registro from './paginas/Registro';
 import RecuperarPassword from './paginas/RecuperarPassword';
-import PaginaAdmin from './paginas/PaginaAdmin';
 import GestionEventos from './paginas/GestionEventos';
 import MisTickets from './paginas/MisTickets';
 import ConfigurarPerfil from './paginas/ConfigurarPerfil';
+import AdminDashboard from './paginas/AdminDashboard';
+import AdminUsuarios from './paginas/AdminUsuarios';
+import AdminEventos from './paginas/AdminEventos';
+import AdminCompras from './paginas/AdminCompras';
 
 function App() {
     return (
@@ -23,15 +27,23 @@ function App() {
                     <Route path="/registro" element={<Registro />} />
                     <Route path="/recuperar-password" element={<RecuperarPassword />} />
 
-                    {/* Rutas protegidas por rol */}
+                    {/* Panel Admin con subrutas */}
                     <Route
                         path="/admin"
                         element={
                             <RutaPrivada rolesPermitidos={['admin']}>
-                                <PaginaAdmin />
+                                <AdminLayout />
                             </RutaPrivada>
                         }
-                    />
+                    >
+                        <Route index element={<Navigate to="dashboard" replace />} />
+                        <Route path="dashboard" element={<AdminDashboard />} />
+                        <Route path="usuarios"  element={<AdminUsuarios />} />
+                        <Route path="eventos"   element={<AdminEventos />} />
+                        <Route path="compras"   element={<AdminCompras />} />
+                    </Route>
+
+                    {/* Organizador */}
                     <Route
                         path="/organizador"
                         element={<Navigate to="/organizador/eventos" replace />}
@@ -45,6 +57,7 @@ function App() {
                         }
                     />
 
+                    {/* Usuario */}
                     <Route
                         path="/mis-tickets"
                         element={
