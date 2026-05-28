@@ -236,7 +236,13 @@ const iniciarSesion = async (req, res) => {
         intentosFallidos.delete(ip);
 
         const { token, jti, expiraEn } = generarToken({ id: usuario.id, rol: usuario.rol });
-        await registrarSesionDB(usuario.id, jti, expiraEn);
+
+        try {
+            await registrarSesionDB(usuario.id, jti, expiraEn);
+        } catch (dbError) {
+            console.error('Error al registrar sesión en DB:', dbError.message);
+            return res.status(500).json({ mensaje: 'Error interno del servidor.' });
+        }
 
         return res.status(200).json({
             mensaje: 'Inicio de sesión exitoso.',
