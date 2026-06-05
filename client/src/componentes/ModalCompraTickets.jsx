@@ -243,7 +243,7 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
             className="fixed inset-0 z-50 flex items-end justify-center md:items-center md:p-6"
             role="dialog"
             aria-modal="true"
-            aria-labelledby="modal-titulo"
+            aria-label={evento?.titulo ? `Compra de entradas — ${evento.titulo}` : 'Compra de entradas'}
         >
             <div
                 className={`absolute inset-0 bg-black/80 transition-opacity duration-200 ${visible ? 'opacity-100' : 'opacity-0'}`}
@@ -281,7 +281,7 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
 
                 {!cargando && error && (
                     <div className="flex flex-col items-center justify-center flex-1 gap-3">
-                        <p className="text-gray-500 text-sm">{error}</p>
+                        <p className="text-gray-400 text-sm">{error}</p>
                         <button onClick={cerrar} className="text-sm text-purple-400 hover:text-purple-300 transition-colors duration-100">
                             Cerrar
                         </button>
@@ -310,22 +310,22 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
                                 <div className="flex-1 overflow-y-auto">
                                     <div className="p-4 sm:p-5 md:p-8 md:pl-6">
                                         <div className="mb-4 pr-8">
-                                            <span className="text-[10px] font-medium tracking-widest uppercase text-gray-600 mb-1.5 block">{evento.categoria}</span>
+                                            <span className="text-xs font-medium tracking-widest uppercase text-gray-400 mb-1.5 block">{evento.categoria}</span>
                                             <h2 id="modal-titulo" className="font-display text-lg sm:text-xl md:text-2xl font-bold text-white leading-tight mb-2.5">
                                                 {evento.titulo}
                                             </h2>
                                             <div className="space-y-1">
                                                 <p className="text-sm text-gray-400 capitalize">
                                                     {formatearFechaLarga(evento.fecha)}
-                                                    {evento.hora && <span className="text-gray-600 normal-case"> · {formatearHora(evento.hora)}</span>}
+                                                    {evento.hora && <span className="text-gray-400 normal-case"> · {formatearHora(evento.hora)}</span>}
                                                 </p>
                                                 {evento.lugar && (
-                                                    <p className="text-sm text-gray-500 flex items-start gap-1.5">
+                                                    <p className="text-sm text-gray-400 flex items-start gap-1.5">
                                                         <svg className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                                         </svg>
-                                                        <span>{evento.lugar}{evento.distrito && <span className="text-gray-600">, {evento.distrito}</span>}</span>
+                                                        <span>{evento.lugar}{evento.distrito && <span className="text-gray-400">, {evento.distrito}</span>}</span>
                                                     </p>
                                                 )}
                                             </div>
@@ -334,7 +334,7 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
                                         <div className="border-t border-white/5 mb-4" />
 
                                         <div className="mb-4">
-                                            <p className="text-[10px] font-medium tracking-widest uppercase text-gray-600 mb-2.5">Zonas disponibles</p>
+                                            <p className="text-xs font-medium tracking-widest uppercase text-gray-400 mb-2.5">Zonas disponibles</p>
                                             {zonas && zonas.length > 0 ? (
                                                 <div className="space-y-1.5 sm:space-y-2">
                                                     {zonas.map((zona) => (
@@ -348,13 +348,13 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <p className="text-sm text-gray-600">No hay zonas disponibles.</p>
+                                                <p className="text-sm text-gray-400">No hay zonas disponibles.</p>
                                             )}
                                         </div>
 
                                         {zonaSeleccionada && (
                                             <div className="mb-4">
-                                                <p className="text-[10px] font-medium tracking-widest uppercase text-gray-600 mb-2.5">Cantidad</p>
+                                                <p className="text-xs font-medium tracking-widest uppercase text-gray-400 mb-2.5">Cantidad</p>
                                                 <div className="flex items-center gap-4 sm:gap-5">
                                                     <div className="flex items-center border border-white/10">
                                                         <button onClick={decrementar} disabled={cantidad <= 1} aria-label="Reducir cantidad" className="w-10 h-10 flex items-center justify-center text-white hover:bg-white/5 active:bg-white/10 transition-colors duration-100 disabled:opacity-25 disabled:cursor-not-allowed">
@@ -366,7 +366,7 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
                                                         </button>
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs text-gray-600 leading-none mb-1">{zonaSeleccionada.nombre} × {cantidad}</p>
+                                                        <p className="text-xs text-gray-400 leading-none mb-1">{zonaSeleccionada.nombre} × {cantidad}</p>
                                                         <p className="text-xl font-bold text-white leading-none">
                                                             {Number(zonaSeleccionada.precio) === 0 ? 'Gratis' : `S/ ${subtotal % 1 === 0 ? subtotal : subtotal.toFixed(2)}`}
                                                         </p>
@@ -393,15 +393,15 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
                                             <div className="border-t border-white/5 pt-4 space-y-3 sm:space-y-4 pb-4">
                                                 {evento.descripcion && (
                                                     <div>
-                                                        <p className="text-[10px] font-medium tracking-widest uppercase text-gray-600 mb-1.5">Descripción</p>
+                                                        <p className="text-xs font-medium tracking-widest uppercase text-gray-400 mb-1.5">Descripción</p>
                                                         <p className="text-sm text-gray-400 leading-relaxed">{evento.descripcion}</p>
                                                     </div>
                                                 )}
                                                 <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                                                    {evento.hora && <div><p className="text-[10px] font-medium tracking-widest uppercase text-gray-600 mb-1">Hora</p><p className="text-sm text-gray-400">{formatearHora(evento.hora)}</p></div>}
-                                                    {evento.categoria && <div><p className="text-[10px] font-medium tracking-widest uppercase text-gray-600 mb-1">Categoría</p><p className="text-sm text-gray-400">{evento.categoria}</p></div>}
-                                                    {evento.distrito && <div><p className="text-[10px] font-medium tracking-widest uppercase text-gray-600 mb-1">Distrito</p><p className="text-sm text-gray-400">{evento.distrito}</p></div>}
-                                                    {evento.direccion && <div><p className="text-[10px] font-medium tracking-widest uppercase text-gray-600 mb-1">Dirección</p><p className="text-sm text-gray-400">{evento.direccion}</p></div>}
+                                                    {evento.hora && <div><p className="text-xs font-medium tracking-widest uppercase text-gray-400 mb-1">Hora</p><p className="text-sm text-gray-400">{formatearHora(evento.hora)}</p></div>}
+                                                    {evento.categoria && <div><p className="text-xs font-medium tracking-widest uppercase text-gray-400 mb-1">Categoría</p><p className="text-sm text-gray-400">{evento.categoria}</p></div>}
+                                                    {evento.distrito && <div><p className="text-xs font-medium tracking-widest uppercase text-gray-400 mb-1">Distrito</p><p className="text-sm text-gray-400">{evento.distrito}</p></div>}
+                                                    {evento.direccion && <div><p className="text-xs font-medium tracking-widest uppercase text-gray-400 mb-1">Dirección</p><p className="text-sm text-gray-400">{evento.direccion}</p></div>}
                                                 </div>
                                             </div>
                                         </div>
@@ -414,7 +414,7 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
                         {paso === 2 && !confirmado && (
                             <div className="flex-1 overflow-y-auto">
                                 <div className="p-4 sm:p-5 md:p-8">
-                                    <button onClick={volverAPaso1} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-white transition-colors duration-100 mb-5">
+                                    <button onClick={volverAPaso1} className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors duration-100 mb-5">
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                         </svg>
@@ -430,14 +430,14 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
                                             noValidate
                                             className="flex-1 order-2 md:order-1 space-y-3.5"
                                         >
-                                            <p className="text-[10px] font-medium tracking-widest uppercase text-gray-600 mb-1">Datos de pago</p>
+                                            <p className="text-xs font-medium tracking-widest uppercase text-gray-400 mb-1">Datos de pago</p>
 
                                             {/* Tarjeta visual */}
-                                            <div className="relative w-full max-w-[280px] aspect-[1.7/1] rounded-xl overflow-hidden bg-gradient-to-br from-purple-950 via-purple-900 to-gray-900 p-4 mb-2 select-none border border-white/10">
+                                            <div aria-hidden="true" className="relative w-full max-w-[280px] aspect-[1.7/1] rounded-xl overflow-hidden bg-gradient-to-br from-purple-950 via-purple-900 to-gray-900 p-4 mb-2 select-none border border-white/10">
                                                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(168,85,247,0.15),transparent_60%)]" />
                                                 <div className="relative flex flex-col h-full justify-between">
                                                     <div className="flex justify-between items-start">
-                                                        <span className="text-[9px] font-bold tracking-[0.2em] uppercase text-white/30">Stay Event</span>
+                                                        <span className="text-xs font-bold tracking-[0.2em] uppercase text-white/30">Stay Event</span>
                                                         <div className="flex">
                                                             <div className="w-4 h-4 rounded-full bg-white/20" />
                                                             <div className="w-4 h-4 rounded-full bg-white/10 -ml-2" />
@@ -447,13 +447,13 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
                                                         <p className="font-mono text-[13px] text-white/60 tracking-widest mb-2 leading-none">{cardPreviewNumero}</p>
                                                         <div className="flex justify-between items-end">
                                                             <div>
-                                                                <p className="text-[8px] text-white/25 uppercase tracking-wider mb-0.5">Titular</p>
+                                                                <p className="text-xs text-white/25 uppercase tracking-wider mb-0.5">Titular</p>
                                                                 <p className="text-[11px] text-white/60 font-medium uppercase tracking-wide leading-none">
                                                                     {pago.titular || 'NOMBRE TITULAR'}
                                                                 </p>
                                                             </div>
                                                             <div className="text-right">
-                                                                <p className="text-[8px] text-white/25 uppercase tracking-wider mb-0.5">Expira</p>
+                                                                <p className="text-xs text-white/25 uppercase tracking-wider mb-0.5">Expira</p>
                                                                 <p className="text-[11px] text-white/60 font-mono leading-none">{pago.expiracion || 'MM/AA'}</p>
                                                             </div>
                                                         </div>
@@ -463,8 +463,9 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
 
                                             {/* Número de tarjeta */}
                                             <div>
-                                                <label className="block text-xs text-gray-500 mb-1.5">Número de tarjeta</label>
+                                                <label htmlFor="pago-numero-tarjeta" className="block text-xs text-gray-400 mb-1.5">Número de tarjeta</label>
                                                 <input
+                                                    id="pago-numero-tarjeta"
                                                     type="text"
                                                     name="numeroTarjeta"
                                                     value={pago.numeroTarjeta}
@@ -479,8 +480,9 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
 
                                             {/* Nombre titular */}
                                             <div>
-                                                <label className="block text-xs text-gray-500 mb-1.5">Nombre del titular</label>
+                                                <label htmlFor="pago-titular" className="block text-xs text-gray-400 mb-1.5">Nombre del titular</label>
                                                 <input
+                                                    id="pago-titular"
                                                     type="text"
                                                     name="titular"
                                                     value={pago.titular}
@@ -495,8 +497,9 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
                                             {/* Expiración + CVV */}
                                             <div className="grid grid-cols-2 gap-3">
                                                 <div>
-                                                    <label className="block text-xs text-gray-500 mb-1.5">Fecha de expiración</label>
+                                                    <label htmlFor="pago-expiracion" className="block text-xs text-gray-400 mb-1.5">Fecha de expiración</label>
                                                     <input
+                                                        id="pago-expiracion"
                                                         type="text"
                                                         name="expiracion"
                                                         value={pago.expiracion}
@@ -510,8 +513,9 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
                                                     {erroresPago.expiracion && <p className="text-xs text-red-400 mt-1">{erroresPago.expiracion}</p>}
                                                 </div>
                                                 <div>
-                                                    <label className="block text-xs text-gray-500 mb-1.5">CVV</label>
+                                                    <label htmlFor="pago-cvv" className="block text-xs text-gray-400 mb-1.5">CVV</label>
                                                     <input
+                                                        id="pago-cvv"
                                                         type="password"
                                                         name="cvv"
                                                         value={pago.cvv}
@@ -538,23 +542,23 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
 
                                         {/* Resumen del pedido — arriba mobile (order-1), derecha desktop */}
                                         <div className="md:w-64 flex-shrink-0 order-1 md:order-2">
-                                            <p className="text-[10px] font-medium tracking-widest uppercase text-gray-600 mb-3">Resumen del pedido</p>
+                                            <p className="text-xs font-medium tracking-widest uppercase text-gray-400 mb-3">Resumen del pedido</p>
                                             <div className="bg-white/[0.03] border border-white/[0.08] p-4 space-y-3">
                                                 <div>
-                                                    <p className="text-[10px] text-gray-600 uppercase tracking-wider mb-0.5">Evento</p>
+                                                    <p className="text-xs text-gray-400 uppercase tracking-wider mb-0.5">Evento</p>
                                                     <p className="text-sm text-white font-medium leading-snug">{evento.titulo}</p>
                                                 </div>
                                                 <div className="border-t border-white/5 pt-3 space-y-2">
                                                     <div className="flex justify-between text-sm">
-                                                        <span className="text-gray-500">Zona</span>
+                                                        <span className="text-gray-400">Zona</span>
                                                         <span className="text-gray-300">{zonaSeleccionada?.nombre}</span>
                                                     </div>
                                                     <div className="flex justify-between text-sm">
-                                                        <span className="text-gray-500">Cantidad</span>
+                                                        <span className="text-gray-400">Cantidad</span>
                                                         <span className="text-gray-300">{cantidad} entrada{cantidad !== 1 ? 's' : ''}</span>
                                                     </div>
                                                     <div className="flex justify-between text-sm">
-                                                        <span className="text-gray-500">P. unitario</span>
+                                                        <span className="text-gray-400">P. unitario</span>
                                                         <span className="text-gray-300">{formatearPrecio(zonaSeleccionada?.precio)}</span>
                                                     </div>
                                                 </div>
@@ -579,10 +583,10 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
                                             )}
 
                                             <div className="flex items-center justify-center gap-1.5 mt-3">
-                                                <svg className="w-3 h-3 text-gray-700 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                <svg className="w-3 h-3 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                                     <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                                                 </svg>
-                                                <p className="text-[10px] text-gray-700">Demostración — sin cobros reales</p>
+                                                <p className="text-xs text-gray-400">Demostración — sin cobros reales</p>
                                             </div>
                                         </div>
                                     </div>
@@ -600,7 +604,7 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
                                         </svg>
                                     </div>
                                     <h3 className="font-display text-xl font-bold text-white mb-1.5">¡Reserva confirmada!</h3>
-                                    <p className="text-sm text-gray-500 mb-6 max-w-xs leading-relaxed">
+                                    <p className="text-sm text-gray-400 mb-6 max-w-xs leading-relaxed">
                                         Presenta este QR en la entrada del evento.
                                     </p>
 
@@ -616,15 +620,15 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
 
                                     <div className="bg-white/[0.03] border border-white/[0.08] p-4 w-full max-w-xs text-left space-y-2 mb-6">
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-gray-600">Evento</span>
+                                            <span className="text-gray-400">Evento</span>
                                             <span className="text-gray-300 text-right ml-4 max-w-[160px] truncate">{evento.titulo}</span>
                                         </div>
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-gray-600">Zona</span>
+                                            <span className="text-gray-400">Zona</span>
                                             <span className="text-gray-300">{zonaSeleccionada?.nombre}</span>
                                         </div>
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-gray-600">Entradas</span>
+                                            <span className="text-gray-400">Entradas</span>
                                             <span className="text-gray-300">{cantidad}</span>
                                         </div>
                                         <div className="border-t border-white/5 pt-2 flex justify-between text-sm font-semibold">
@@ -666,12 +670,12 @@ const ZonaBtn = React.memo(({ zona, agotado, activa, onSeleccionar }) => (
             </div>
             <div>
                 <p className={`text-sm font-medium leading-none mb-0.5 ${agotado ? 'text-gray-600' : 'text-white'}`}>{zona.nombre}</p>
-                {!agotado && <p className="text-xs text-gray-600 leading-none">{zona.stock} disponible{zona.stock !== 1 ? 's' : ''}</p>}
+                {!agotado && <p className="text-xs text-gray-400 leading-none">{zona.stock} disponible{zona.stock !== 1 ? 's' : ''}</p>}
             </div>
         </div>
         <div className="text-right flex-shrink-0 ml-3">
             {agotado ? (
-                <span className="text-[11px] font-medium text-red-400/50 uppercase tracking-wider">Agotado</span>
+                <span className="text-xs font-medium text-red-400/50 uppercase tracking-wider">Agotado</span>
             ) : (
                 <span className={`text-sm font-bold ${activa ? 'text-purple-300' : 'text-white'}`}>{formatearPrecio(zona.precio)}</span>
             )}

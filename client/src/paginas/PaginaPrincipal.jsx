@@ -152,7 +152,7 @@ const PaginaPrincipal = () => {
 
                 {/* Contenido central */}
                 <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-6 pt-16">
-                    <span className={`inline-block px-3 py-1 border text-[10px] font-medium tracking-[0.2em] uppercase mb-7 transition-all duration-700 ${SLIDES[slideActual].badgeColor}`}>
+                    <span className={`inline-block px-3 py-1 border text-xs font-medium tracking-[0.2em] uppercase mb-7 transition-all duration-700 ${SLIDES[slideActual].badgeColor}`}>
                         {SLIDES[slideActual].badge}
                     </span>
 
@@ -227,7 +227,7 @@ const PaginaPrincipal = () => {
                             <h2 className="font-display text-2xl sm:text-3xl font-bold text-white mb-1">
                                 Eventos
                             </h2>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-400">
                                 {cargando
                                     ? 'Cargando...'
                                     : `${eventosFiltrados.length} evento${eventosFiltrados.length !== 1 ? 's' : ''} disponible${eventosFiltrados.length !== 1 ? 's' : ''}`
@@ -247,6 +247,7 @@ const PaginaPrincipal = () => {
                                 </svg>
                                 <input
                                     type="text"
+                                    aria-label="Buscar eventos por nombre"
                                     placeholder="Buscar por nombre..."
                                     value={filtros.busqueda}
                                     onChange={e => setFiltro('busqueda', e.target.value)}
@@ -257,6 +258,7 @@ const PaginaPrincipal = () => {
                             {/* Categoría */}
                             <div className="relative">
                                 <select
+                                    aria-label="Filtrar por categoría"
                                     value={filtros.categoria}
                                     onChange={e => setFiltro('categoria', e.target.value)}
                                     className="w-full px-4 py-2.5 bg-gray-800/80 text-sm text-white focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors appearance-none cursor-pointer"
@@ -272,6 +274,7 @@ const PaginaPrincipal = () => {
                             {/* Distrito */}
                             <div className="relative">
                                 <select
+                                    aria-label="Filtrar por distrito"
                                     value={filtros.distrito}
                                     onChange={e => setFiltro('distrito', e.target.value)}
                                     className="w-full px-4 py-2.5 bg-gray-800/80 text-sm text-white focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors appearance-none cursor-pointer"
@@ -287,6 +290,7 @@ const PaginaPrincipal = () => {
                             {/* Precio */}
                             <div className="relative">
                                 <select
+                                    aria-label="Filtrar por precio máximo"
                                     value={filtros.precioMax}
                                     onChange={e => setFiltro('precioMax', e.target.value)}
                                     className="w-full px-4 py-2.5 bg-gray-800/80 text-sm text-white focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors appearance-none cursor-pointer"
@@ -315,14 +319,14 @@ const PaginaPrincipal = () => {
                     {cargando && (
                         <div className="flex flex-col items-center justify-center py-40 gap-5">
                             <div className="w-10 h-10 rounded-full border-4 border-purple-500/20 border-t-purple-500 animate-spin" />
-                            <p className="text-gray-600 text-sm tracking-widest uppercase text-xs">Cargando eventos</p>
+                            <p className="text-gray-400 text-xs tracking-widest uppercase">Cargando eventos</p>
                         </div>
                     )}
 
                     {/* Estado: error */}
                     {!cargando && error && (
                         <div className="text-center py-40">
-                            <p className="text-gray-500 text-sm max-w-sm mx-auto">{error}</p>
+                            <p className="text-gray-400 text-sm max-w-sm mx-auto">{error}</p>
                         </div>
                     )}
 
@@ -332,7 +336,7 @@ const PaginaPrincipal = () => {
                             <h3 className="font-display text-xl font-bold text-white mb-3">
                                 {hayFiltros ? 'Sin resultados' : 'No hay eventos disponibles'}
                             </h3>
-                            <p className="text-gray-600 text-sm mb-8 max-w-xs mx-auto">
+                            <p className="text-gray-400 text-sm mb-8 max-w-xs mx-auto">
                                 {hayFiltros
                                     ? 'Ningún evento coincide con los criterios aplicados.'
                                     : 'Aún no hay eventos registrados. Vuelve pronto para ver las novedades.'}
@@ -385,10 +389,10 @@ const PaginaPrincipal = () => {
 
             {/* FOOTER */}
             <footer className="border-t border-white/5 py-12 px-4 text-center mt-8">
-                <p className="font-display text-xs font-bold tracking-[0.3em] uppercase text-gray-700 mb-2">
+                <p className="font-display text-xs font-bold tracking-[0.3em] uppercase text-gray-400 mb-2">
                     Stay Event
                 </p>
-                <p className="text-gray-800 text-xs">
+                <p className="text-gray-400 text-xs">
                     &copy; {new Date().getFullYear()} Stay Event. Todos los derechos reservados.
                 </p>
             </footer>

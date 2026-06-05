@@ -115,6 +115,7 @@ const Login = () => {
 
             {/* Panel izquierdo: imagen de evento */}
             <div
+                aria-hidden="true"
                 className="hidden lg:flex lg:w-[58%] relative flex-col justify-between p-12"
                 style={{
                     backgroundImage: 'url(https://auara.org/cdn/shop/articles/Diseno_sin_titulo_2048x.jpg?v=1657694449)',
@@ -123,25 +124,25 @@ const Login = () => {
                 }}
             >
                 {/* Overlay degradado */}
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 via-black/60 to-black/80" />
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-900/95 via-black/80 to-black/90" />
 
                 {/* Logo superior */}
                 <div className="relative z-10">
-                    <Link to="/" className="text-white text-xl font-bold tracking-tight hover:text-purple-200 transition-colors">Stay Event</Link>
+                    <Link to="/" className="text-white text-xl font-bold tracking-tight hover:text-purple-200 transition-colors" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.9)' }}>Stay Event</Link>
                 </div>
 
                 {/* Texto inferior */}
                 <div className="relative z-10">
-                    <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
+                    <h2 className="text-4xl font-bold text-white mb-4 leading-tight" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.9)' }}>
                         Todos los eventos que quieres<br />estan aquí.
                     </h2>
-                    <p className="text-white/60 text-base max-w-sm leading-relaxed">
+                    <p className="text-white/80 text-base max-w-sm leading-relaxed" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.9)' }}>
                         Descubre, selecciona y compra entradas para los mejores conciertos, festivales y espectáculos según tus preferencias.                    </p>
                 </div>
             </div>
 
             {/* Panel derecho: formulario */}
-            <div className="flex-1 flex items-center justify-center px-6 py-12 bg-white">
+            <main className="flex-1 flex items-center justify-center px-6 py-12 bg-white">
                 <div className="w-full max-w-[400px]">
 
                     {/* Logo solo en mobile */}
@@ -152,7 +153,7 @@ const Login = () => {
                     {/* Encabezado */}
                     <div className="mb-8">
                         <h1 className="text-2xl font-bold text-gray-900 mb-1">Bienvenido a StayEvent</h1>
-                        <p className="text-sm text-gray-500">Ingresa tus datos para continuar</p>
+                        <p className="text-sm text-gray-600">Ingresa tus datos para continuar</p>
                     </div>
 
                     {/* Alerta de error */}
@@ -172,7 +173,7 @@ const Login = () => {
                                 Correo electrónico
                             </label>
                             <div className="relative">
-                                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 pointer-events-none">
+                                <span aria-hidden="true" className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 pointer-events-none">
                                     <IconoEmail />
                                 </span>
                                 <input
@@ -198,7 +199,7 @@ const Login = () => {
                                 Contraseña
                             </label>
                             <div className="relative">
-                                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 pointer-events-none">
+                                <span aria-hidden="true" className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 pointer-events-none">
                                     <IconoCandado />
                                 </span>
                                 <input
@@ -260,7 +261,7 @@ const Login = () => {
                     </form>
 
                     {/* Link a registro */}
-                    <p className="text-center text-sm text-gray-500 mt-6">
+                    <p className="text-center text-sm text-gray-600 mt-6">
                         ¿No tienes cuenta?{' '}
                         <Link
                             to="/registro"
@@ -270,7 +271,7 @@ const Login = () => {
                         </Link>
                     </p>
                 </div>
-            </div>
+            </main>
         </div>
     );
 };

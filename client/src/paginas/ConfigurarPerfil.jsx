@@ -228,8 +228,9 @@ const ConfigurarPerfil = () => {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className={labelCls}>Nombre</label>
+                                    <label htmlFor="nombre" className={labelCls}>Nombre</label>
                                     <input
+                                        id="nombre"
                                         type="text"
                                         name="nombre"
                                         value={formulario.nombre}
@@ -241,8 +242,9 @@ const ConfigurarPerfil = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className={labelCls}>Apellido</label>
+                                    <label htmlFor="apellido" className={labelCls}>Apellido</label>
                                     <input
+                                        id="apellido"
                                         type="text"
                                         name="apellido"
                                         value={formulario.apellido}
@@ -256,8 +258,9 @@ const ConfigurarPerfil = () => {
                             </div>
 
                             <div>
-                                <label className={labelCls}>Email</label>
+                                <label htmlFor="email" className={labelCls}>Email</label>
                                 <input
+                                    id="email"
                                     type="email"
                                     name="email"
                                     value={formulario.email}
@@ -270,9 +273,11 @@ const ConfigurarPerfil = () => {
                             </div>
 
                             <div>
-                                <label className={labelCls}>Teléfono</label>
+                                <label htmlFor="telefono" className={labelCls}>Teléfono</label>
                                 <div className="flex gap-2">
+                                    <label htmlFor="codigoPais" className="sr-only">Código de país</label>
                                     <select
+                                        id="codigoPais"
                                         name="codigoPais"
                                         value={formulario.codigoPais}
                                         onChange={manejarCambio}
@@ -283,6 +288,7 @@ const ConfigurarPerfil = () => {
                                         ))}
                                     </select>
                                     <input
+                                        id="telefono"
                                         type="tel"
                                         name="telefono"
                                         value={formulario.telefono}
@@ -306,8 +312,9 @@ const ConfigurarPerfil = () => {
                             </div>
 
                             <div>
-                                <label className={labelCls}>Contraseña actual</label>
+                                <label htmlFor="passwordActual" className={labelCls}>Contraseña actual</label>
                                 <input
+                                    id="passwordActual"
                                     type="password"
                                     name="passwordActual"
                                     value={passForm.passwordActual}
@@ -319,8 +326,9 @@ const ConfigurarPerfil = () => {
                             </div>
 
                             <div>
-                                <label className={labelCls}>Nueva contraseña</label>
+                                <label htmlFor="passwordNueva" className={labelCls}>Nueva contraseña</label>
                                 <input
+                                    id="passwordNueva"
                                     type="password"
                                     name="passwordNueva"
                                     value={passForm.passwordNueva}
@@ -332,8 +340,9 @@ const ConfigurarPerfil = () => {
                             </div>
 
                             <div>
-                                <label className={labelCls}>Confirmar nueva contraseña</label>
+                                <label htmlFor="confirmarPassword" className={labelCls}>Confirmar nueva contraseña</label>
                                 <input
+                                    id="confirmarPassword"
                                     type="password"
                                     name="confirmarPassword"
                                     value={passForm.confirmarPassword}
