@@ -1,8 +1,11 @@
+// Operaciones y métricas para el panel de administración
+
 const bcrypt = require('bcryptjs');
 const { pool } = require('../config/db');
+const { logError } = require('../config/logger');
+const { SALT_ROUNDS, REGEX_CARACTER_ESPECIAL, ROLES_EDITABLES } = require('../config/constantes');
 
-const SALT_ROUNDS   = 12;
-const REGEX_ESPECIAL = /[$%#]/;
+const ROLES_EDITABLES_SET = new Set(ROLES_EDITABLES);
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
@@ -42,8 +45,8 @@ const obtenerMetricas = async (req, res) => {
             },
         });
     } catch (error) {
-        console.error('Error al obtener métricas admin:', error.message);
-        res.status(500).json({ mensaje: 'Error al obtener métricas.' });
+        const idError = logError('Admin.obtenerMetricas', error);
+        res.status(500).json({ mensaje: 'Error al obtener métricas.', referencia: idError });
     }
 };
 
@@ -62,8 +65,8 @@ const listarUsuarios = async (req, res) => {
         `);
         res.json({ usuarios: rows });
     } catch (error) {
-        console.error('Error al listar usuarios admin:', error.message);
-        res.status(500).json({ mensaje: 'Error al obtener usuarios.' });
+        const idError = logError('Admin.listarUsuarios', error);
+        res.status(500).json({ mensaje: 'Error al obtener usuarios.', referencia: idError });
     }
 };
 
@@ -85,15 +88,14 @@ const obtenerUsuario = async (req, res) => {
         if (!rows.length) return res.status(404).json({ mensaje: 'Usuario no encontrado.' });
         res.json({ usuario: rows[0] });
     } catch (error) {
-        console.error('Error al obtener usuario admin:', error.message);
-        res.status(500).json({ mensaje: 'Error al obtener usuario.' });
+        const idError = logError('Admin.obtenerUsuario', error);
+        res.status(500).json({ mensaje: 'Error al obtener usuario.', referencia: idError });
     }
 };
 
 // Campos permitidos en edición: nombre, apellido, teléfono, rol y contraseña opcional.
 // El email no se modifica desde el panel admin para reducir la superficie de ataque.
 const CAMPOS_EDITAR   = new Set(['nombre', 'apellido', 'telefono', 'rol', 'password']);
-const ROLES_EDITABLES = new Set(['usuario', 'organizador']);
 
 const editarUsuario = async (req, res) => {
     try {
@@ -122,7 +124,7 @@ const editarUsuario = async (req, res) => {
         }
 
         if (rol !== undefined) {
-            if (typeof rol !== 'string' || !ROLES_EDITABLES.has(rol)) {
+            if (typeof rol !== 'string' || !ROLES_EDITABLES_SET.has(rol)) {
                 return res.status(400).json({ mensaje: 'Rol inválido. Solo se permite usuario u organizador.' });
             }
         }
@@ -152,7 +154,7 @@ const editarUsuario = async (req, res) => {
             if (password.length > 72) {
                 return res.status(400).json({ mensaje: 'La contraseña no debe exceder 72 caracteres.' });
             }
-            if (!REGEX_ESPECIAL.test(password)) {
+            if (!REGEX_CARACTER_ESPECIAL.test(password)) {
                 return res.status(400).json({
                     mensaje: 'La contraseña debe contener al menos un carácter especial ($, %, #).',
                 });
@@ -167,8 +169,8 @@ const editarUsuario = async (req, res) => {
 
         res.json({ mensaje: 'Usuario actualizado correctamente.' });
     } catch (error) {
-        console.error('Error al editar usuario admin:', error.message);
-        res.status(500).json({ mensaje: 'Error al actualizar usuario.' });
+        const idError = logError('Admin.editarUsuario', error);
+        res.status(500).json({ mensaje: 'Error al actualizar usuario.', referencia: idError });
     }
 };
 
@@ -193,8 +195,8 @@ const listarEventosAdmin = async (req, res) => {
         `);
         res.json({ eventos: rows });
     } catch (error) {
-        console.error('Error al listar eventos admin:', error.message);
-        res.status(500).json({ mensaje: 'Error al obtener eventos.' });
+        const idError = logError('Admin.listarEventosAdmin', error);
+        res.status(500).json({ mensaje: 'Error al obtener eventos.', referencia: idError });
     }
 };
 
@@ -221,8 +223,8 @@ const obtenerEventoAdmin = async (req, res) => {
         if (!rows.length) return res.status(404).json({ mensaje: 'Evento no encontrado.' });
         res.json({ evento: rows[0] });
     } catch (error) {
-        console.error('Error al obtener evento admin:', error.message);
-        res.status(500).json({ mensaje: 'Error al obtener evento.' });
+        const idError = logError('Admin.obtenerEventoAdmin', error);
+        res.status(500).json({ mensaje: 'Error al obtener evento.', referencia: idError });
     }
 };
 
@@ -245,8 +247,8 @@ const cambiarEstadoEvento = async (req, res) => {
             activo:  nuevoEstado,
         });
     } catch (error) {
-        console.error('Error al cambiar estado evento admin:', error.message);
-        res.status(500).json({ mensaje: 'Error al cambiar estado del evento.' });
+        const idError = logError('Admin.cambiarEstadoEvento', error);
+        res.status(500).json({ mensaje: 'Error al cambiar estado del evento.', referencia: idError });
     }
 };
 

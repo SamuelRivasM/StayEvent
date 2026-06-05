@@ -1,10 +1,21 @@
+// Operaciones de compra (usa transacciones con bloqueo pesimista FOR UPDATE)
+
 const { pool } = require('../config/db');
 const crypto = require('crypto');
+const { logError } = require('../config/logger');
+const { MAX_CANTIDAD_COMPRA, MAX_INTENTOS_CODIGO } = require('../config/constantes');
 
+// Genera un código STE-XXXXXX único controlando el límite de intentos
 const generarCodigoIngreso = async () => {
     let codigo;
     let existe;
+    let intentos = 0;
+
     do {
+        if (intentos >= MAX_INTENTOS_CODIGO) {
+            throw new Error('No se pudo generar un código único tras múltiples intentos.');
+        }
+
         const parte = crypto.randomBytes(3).toString('hex').toUpperCase();
         codigo = `STE-${parte}`;
         const [filas] = await pool.execute(
@@ -12,24 +23,43 @@ const generarCodigoIngreso = async () => {
             [codigo]
         );
         existe = filas[0].count > 0;
+        intentos++;
     } while (existe);
+
     return codigo;
+};
+
+// Parsea y valida que sea entero positivo (> 0)
+const parseEnteroPositivo = (valor) => {
+    const num = parseInt(valor, 10);
+    return Number.isInteger(num) && num > 0 ? num : null;
 };
 
 const crearCompra = async (req, res) => {
     const { evento_id, zona_id, cantidad } = req.body;
-    const usuario_id = req.usuario.id;
 
+    // Validación estricta de tipos
     if (!evento_id || !zona_id || !cantidad) {
         return res.status(400).json({ mensaje: 'Datos de compra incompletos.' });
     }
 
-    const cantidadInt = parseInt(cantidad, 10);
-    if (isNaN(cantidadInt) || cantidadInt < 1 || cantidadInt > 20) {
-        return res.status(400).json({ mensaje: 'Cantidad inválida.' });
+    const eventoIdInt = parseEnteroPositivo(evento_id);
+    const zonaIdInt = parseEnteroPositivo(zona_id);
+    const cantidadInt = parseEnteroPositivo(cantidad);
+
+    if (!eventoIdInt) {
+        return res.status(400).json({ mensaje: 'ID de evento inválido.' });
+    }
+    if (!zonaIdInt) {
+        return res.status(400).json({ mensaje: 'ID de zona inválido.' });
+    }
+    if (!cantidadInt || cantidadInt > MAX_CANTIDAD_COMPRA) {
+        return res.status(400).json({ mensaje: `Cantidad inválida. Máximo ${MAX_CANTIDAD_COMPRA} entradas.` });
     }
 
+    const usuario_id = req.usuario.id;
     const conn = await pool.getConnection();
+
     try {
         await conn.beginTransaction();
 
@@ -39,7 +69,7 @@ const crearCompra = async (req, res) => {
              JOIN eventos e ON z.evento_id = e.id
              WHERE z.id = ? AND z.evento_id = ? AND z.activo = 1 AND e.activo = 1 AND e.eliminado = 0
              FOR UPDATE`,
-            [zona_id, evento_id]
+            [zonaIdInt, eventoIdInt]
         );
 
         if (zonas.length === 0) {
@@ -55,7 +85,7 @@ const crearCompra = async (req, res) => {
 
         await conn.execute(
             'UPDATE zonas_evento SET stock = stock - ? WHERE id = ?',
-            [cantidadInt, zona_id]
+            [cantidadInt, zonaIdInt]
         );
 
         const codigo_ingreso = await generarCodigoIngreso();
@@ -64,7 +94,7 @@ const crearCompra = async (req, res) => {
         await conn.execute(
             `INSERT INTO compras (usuario_id, evento_id, zona_id, cantidad, subtotal, codigo_ingreso, estado)
              VALUES (?, ?, ?, ?, ?, ?, 'confirmado')`,
-            [usuario_id, evento_id, zona_id, cantidadInt, subtotal, codigo_ingreso]
+            [usuario_id, eventoIdInt, zonaIdInt, cantidadInt, subtotal, codigo_ingreso]
         );
 
         await conn.commit();
@@ -76,8 +106,8 @@ const crearCompra = async (req, res) => {
         });
     } catch (error) {
         await conn.rollback();
-        console.error('Error en crearCompra:', error.message);
-        res.status(500).json({ mensaje: 'Error al procesar la compra.' });
+        const idError = logError('Compras.crearCompra', error);
+        res.status(500).json({ mensaje: 'Error al procesar la compra.', referencia: idError });
     } finally {
         conn.release();
     }
@@ -103,9 +133,10 @@ const obtenerMisTickets = async (req, res) => {
 
         res.json({ compras });
     } catch (error) {
-        console.error('Error en obtenerMisTickets:', error.message);
-        res.status(500).json({ mensaje: 'Error al obtener tus tickets.' });
+        const idError = logError('Compras.obtenerMisTickets', error);
+        res.status(500).json({ mensaje: 'Error al obtener tus tickets.', referencia: idError });
     }
 };
 
 module.exports = { crearCompra, obtenerMisTickets };
+

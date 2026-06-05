@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/db');
 const { verificarToken } = require('../middlewares/authMiddleware');
+const { logError } = require('../config/logger');
 const {
     obtenerMetricas,
     listarUsuarios,
@@ -25,8 +26,8 @@ const esAdmin = async (req, res, next) => {
         }
         next();
     } catch (err) {
-        console.error('Error en esAdmin:', err.message);
-        res.status(500).json({ mensaje: 'Error de autorización.' });
+        const idError = logError('AdminRutas.esAdmin', err);
+        res.status(500).json({ mensaje: 'Error de autorización.', referencia: idError });
     }
 };
 

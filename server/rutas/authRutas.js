@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
-const { registrar, iniciarSesion, obtenerPerfil, cerrarSesion } = require('../controladores/authControlador');
+const { registrar, iniciarSesion, obtenerPerfil, cerrarSesion, recuperarPassword } = require('../controladores/authControlador');
 const { verificarToken } = require('../middlewares/authMiddleware');
 
 const limitadorRegistro = rateLimit({
@@ -27,6 +27,9 @@ router.post('/register', limitadorRegistro, registrar);
 
 // POST /api/auth/login
 router.post('/login', limitadorLogin, iniciarSesion);
+
+// POST /api/auth/recover-password
+router.post('/recover-password', recuperarPassword);
 
 // GET /api/auth/me
 router.get('/me', verificarToken, obtenerPerfil);

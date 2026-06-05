@@ -1,15 +1,20 @@
+// Operaciones del perfil de usuarios
+
 const bcrypt = require('bcryptjs');
 const { pool } = require('../config/db');
-
-const SALT_ROUNDS = 12;
-
-const DIGITOS_POR_PAIS = {
-    '+51': 9, '+56': 9, '+54': 10, '+57': 10, '+52': 10,
-    '+593': 9, '+591': 8, '+598': 8, '+595': 9,
-};
-const REGEX_EMAIL = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
-const REGEX_CARACTER_ESPECIAL = /[$%#]/;
-const REGEX_SOLO_NUMEROS = /^\d+$/;
+const { logError } = require('../config/logger');
+const {
+    SALT_ROUNDS,
+    REGEX_EMAIL,
+    REGEX_CARACTER_ESPECIAL,
+    REGEX_SOLO_NUMEROS,
+    DIGITOS_POR_PAIS,
+    MAX_EMAIL_LENGTH,
+    MAX_PASSWORD_LENGTH,
+    MIN_PASSWORD_LENGTH,
+    MAX_NOMBRE_LENGTH,
+    MIN_NOMBRE_LENGTH,
+} = require('../config/constantes');
 
 const CAMPOS_PERMITIDOS = new Set([
     'nombre', 'apellido', 'email', 'codigoPais', 'telefono',
@@ -150,8 +155,8 @@ const actualizarPerfil = async (req, res) => {
             },
         });
     } catch (error) {
-        console.error('Error al actualizar perfil:', error.message);
-        return res.status(500).json({ mensaje: 'Error interno del servidor.' });
+        const idError = logError('Usuarios.actualizarPerfil', error);
+        return res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
     }
 };
 
