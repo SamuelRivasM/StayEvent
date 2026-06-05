@@ -1,6 +1,10 @@
-const { pool } = require('../config/db');
+// Operaciones y publicación de eventos
 
-const CATEGORIAS_VALIDAS = new Set(['Conciertos', 'Festivales', 'Fiestas / Discoteca']);
+const { pool } = require('../config/db');
+const { logError } = require('../config/logger');
+const { CATEGORIAS_VALIDAS } = require('../config/constantes');
+
+const CATEGORIAS_SET = new Set(CATEGORIAS_VALIDAS);
 
 const sanitizarTexto = (str, max) => {
     if (typeof str !== 'string') return null;
@@ -60,15 +64,22 @@ const obtenerEventos = async (req, res) => {
 
         if (categoria) { query += ' AND e.categoria = ?'; params.push(categoria); }
         if (distrito) { query += ' AND e.distrito = ?'; params.push(distrito); }
-        if (busqueda) { query += ' AND e.titulo LIKE ?'; params.push(`%${busqueda}%`); }
+        // Escapar comodines de LIKE
+        if (busqueda) {
+            const busquedaSanitizada = String(busqueda)
+                .replace(/%/g, '\\%')
+                .replace(/_/g, '\\_');
+            query += ' AND e.titulo LIKE ?';
+            params.push(`%${busquedaSanitizada}%`);
+        }
 
         query += ' ORDER BY e.fecha ASC';
 
         const [eventos] = await pool.query(query, params);
         res.json({ eventos });
     } catch (error) {
-        console.error('Error al obtener eventos:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor.' });
+        const idError = logError('Eventos.obtenerEventos', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
     }
 };
 
@@ -102,8 +113,8 @@ const obtenerDetalleEvento = async (req, res) => {
 
         res.json({ evento: eventos[0], zonas });
     } catch (error) {
-        console.error('Error al obtener detalle del evento:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor.' });
+        const idError = logError('Eventos.obtenerDetalleEvento', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
     }
 };
 
@@ -128,8 +139,8 @@ const obtenerEstadisticas = async (req, res) => {
         );
         res.json({ estadisticas: { ...statsRows[0], stock_total: stockRows[0].stock_total } });
     } catch (error) {
-        console.error('Error al obtener estadísticas:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor.' });
+        const idError = logError('Eventos.obtenerEstadisticas', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
     }
 };
 
@@ -161,8 +172,8 @@ const obtenerEventosOrganizador = async (req, res) => {
 
         res.json({ eventos });
     } catch (error) {
-        console.error('Error al obtener eventos del organizador:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor.' });
+        const idError = logError('Eventos.obtenerEventosOrganizador', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
     }
 };
 
@@ -174,7 +185,7 @@ const crearEvento = async (req, res) => {
         if (!titulo || !categoria || !fecha || !hora || !lugar) {
             return res.status(400).json({ mensaje: 'Título, categoría, fecha, hora y lugar son obligatorios.' });
         }
-        if (!CATEGORIAS_VALIDAS.has(categoria)) {
+        if (!CATEGORIAS_SET.has(categoria)) {
             return res.status(400).json({ mensaje: 'Categoría no válida.' });
         }
         if (!esFechaValida(fecha)) {
@@ -206,8 +217,8 @@ const crearEvento = async (req, res) => {
 
         res.status(201).json({ mensaje: 'Evento creado correctamente.', id: resultado.insertId });
     } catch (error) {
-        console.error('Error al crear evento:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor.' });
+        const idError = logError('Eventos.crearEvento', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
     }
 };
 
@@ -232,7 +243,7 @@ const actualizarEvento = async (req, res) => {
         if (!titulo || !categoria || !fecha || !hora || !lugar) {
             return res.status(400).json({ mensaje: 'Título, categoría, fecha, hora y lugar son obligatorios.' });
         }
-        if (!CATEGORIAS_VALIDAS.has(categoria)) {
+        if (!CATEGORIAS_SET.has(categoria)) {
             return res.status(400).json({ mensaje: 'Categoría no válida.' });
         }
         if (!esFechaValida(fecha)) {
@@ -266,8 +277,8 @@ const actualizarEvento = async (req, res) => {
 
         res.json({ mensaje: 'Evento actualizado correctamente.' });
     } catch (error) {
-        console.error('Error al actualizar evento:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor.' });
+        const idError = logError('Eventos.actualizarEvento', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
     }
 };
 
@@ -298,8 +309,8 @@ const cambiarEstadoEvento = async (req, res) => {
 
         res.json({ mensaje: `Evento ${nuevoEstado ? 'activado' : 'desactivado'} correctamente.`, activo: nuevoEstado });
     } catch (error) {
-        console.error('Error al cambiar estado del evento:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor.' });
+        const idError = logError('Eventos.cambiarEstadoEvento', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
     }
 };
 
@@ -326,8 +337,8 @@ const eliminarEvento = async (req, res) => {
 
         res.json({ mensaje: 'Evento eliminado correctamente.' });
     } catch (error) {
-        console.error('Error al eliminar evento:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor.' });
+        const idError = logError('Eventos.eliminarEvento', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
     }
 };
 

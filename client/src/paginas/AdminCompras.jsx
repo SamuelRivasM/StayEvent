@@ -255,6 +255,7 @@ const FilaCompra = React.memo(({ compra, onDetalle }) => (
 const AdminCompras = () => {
     const [compras, setCompras]           = useState([]);
     const [cargando, setCargando]         = useState(true);
+    const [mostrarSkeleton, setMostrarSkeleton] = useState(false);
 
     const [busqueda, setBusqueda]         = useState('');
     const [periodoSel, setPeriodoSel]     = useState('todos');
@@ -272,13 +273,23 @@ const AdminCompras = () => {
         toastTimerRef.current = setTimeout(() => setToast(''), 3000);
     }, []);
 
-    // Simular carga (reemplazar con api.get cuando exista el endpoint)
+    // Skeleton diferido (se muestra tras 250ms para evitar parpadeos en redes rápidas)
     useEffect(() => {
+        const skeletonTimer = setTimeout(() => {
+            setMostrarSkeleton(true);
+        }, 250);
+
         const timer = setTimeout(() => {
             setCompras(COMPRAS_MOCK);
             setCargando(false);
-        }, 1200);
-        return () => clearTimeout(timer);
+            clearTimeout(skeletonTimer);
+            setMostrarSkeleton(false);
+        }, 50);
+
+        return () => {
+            clearTimeout(timer);
+            clearTimeout(skeletonTimer);
+        };
     }, []);
 
     // Periodos disponibles extraídos de los datos
@@ -340,11 +351,11 @@ const AdminCompras = () => {
             </div>
 
             {/* ── KPI Cards ──────────────────────────────────────── */}
-            {cargando ? (
+            {mostrarSkeleton ? (
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
                     {Array.from({ length: 4 }).map((_, i) => <SkeletonKPI key={i} />)}
                 </div>
-            ) : compras.length > 0 && (
+            ) : (!cargando && compras.length > 0) ? (
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
                     {/* Ingresos Totales */}
                     <div className="bg-white/[0.02] border border-white/[0.06] px-4 py-4 relative overflow-hidden">
@@ -412,7 +423,7 @@ const AdminCompras = () => {
                         </div>
                     </div>
                 </div>
-            )}
+            ) : null}
 
             {/* ── Tabla contenedora ──────────────────────────────── */}
             <div className="bg-white/[0.02] border border-white/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.4)]">
@@ -499,7 +510,7 @@ const AdminCompras = () => {
                 )}
 
                 {/* ── Contenido de la tabla ───────────────────────── */}
-                {cargando ? (
+                {mostrarSkeleton ? (
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
@@ -517,8 +528,7 @@ const AdminCompras = () => {
                             </tbody>
                         </table>
                     </div>
-
-                ) : compras.length === 0 ? (
+                ) : cargando ? null : compras.length === 0 ? (
                     <div className="text-center py-32">
                         <div className="w-11 h-11 rounded-full bg-white/[0.03] border border-white/[0.07] flex items-center justify-center mx-auto mb-4">
                             <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">

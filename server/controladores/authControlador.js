@@ -1,30 +1,28 @@
+// Controladores de registro, login y recuperación de contraseña
+
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { pool } = require('../config/db');
+const { logError, logDev, logWarn } = require('../config/logger');
+const {
+    SALT_ROUNDS,
+    REGEX_EMAIL,
+    REGEX_CARACTER_ESPECIAL,
+    REGEX_SOLO_NUMEROS,
+    DIGITOS_POR_PAIS,
+    MAX_EMAIL_LENGTH,
+    MAX_PASSWORD_LENGTH,
+    MIN_PASSWORD_LENGTH,
+    MAX_NOMBRE_LENGTH,
+    MIN_NOMBRE_LENGTH,
+    DELAY_BASE_MS,
+    MAX_DELAY_MS,
+    INTENTOS_ANTES_DELAY,
+    LIMPIEZA_INTENTOS_MS,
+} = require('../config/constantes');
 
-const SALT_ROUNDS = 12;
 const CAMPOS_PERMITIDOS_REGISTRO = new Set(['nombre', 'apellido', 'email', 'password', 'codigoPais', 'telefono']);
-
-const DIGITOS_POR_PAIS = {
-    '+51': 9,   // Perú
-    '+56': 9,   // Chile
-    '+54': 10,  // Argentina
-    '+57': 10,  // Colombia
-    '+52': 10,  // México
-    '+593': 9,  // Ecuador
-    '+591': 8,  // Bolivia
-    '+598': 8,  // Uruguay
-    '+595': 9,  // Paraguay
-};
-const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const REGEX_CARACTER_ESPECIAL = /[$%#]/;
-const REGEX_SOLO_NUMEROS = /^\d+$/;
-
-const MAX_EMAIL_LENGTH = 100;
-const MAX_PASSWORD_LENGTH = 72;
-const DELAY_BASE_MS = 300;
-const MAX_DELAY_MS = 4000;
 
 // Rastreo en memoria de intentos fallidos por IP para retraso progresivo
 const intentosFallidos = new Map();
@@ -32,9 +30,9 @@ const intentosFallidos = new Map();
 setInterval(() => {
     const ahora = Date.now();
     for (const [clave, datos] of intentosFallidos.entries()) {
-        if (ahora - datos.ultimoIntento > 30 * 60 * 1000) intentosFallidos.delete(clave);
+        if (ahora - datos.ultimoIntento > LIMPIEZA_INTENTOS_MS) intentosFallidos.delete(clave);
     }
-}, 30 * 60 * 1000).unref();
+}, LIMPIEZA_INTENTOS_MS).unref();
 
 const calcularDelay = (intentos) =>
     Math.min(DELAY_BASE_MS * Math.pow(2, Math.max(0, intentos - 2)), MAX_DELAY_MS);
@@ -170,8 +168,8 @@ const registrar = async (req, res) => {
             },
         });
     } catch (error) {
-        console.error('Error en registro:', error.message);
-        return res.status(500).json({ mensaje: 'Error interno del servidor.' });
+        const idError = logError('Auth.registrar', error);
+        return res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
     }
 };
 
@@ -203,9 +201,9 @@ const iniciarSesion = async (req, res) => {
             return res.status(400).json({ mensaje: 'Credenciales inválidas.' });
         }
 
-        // Retraso progresivo a partir del 3er intento fallido desde la misma IP
+        // Retraso progresivo anti brute-force si se superan los intentos fallidos permitidos
         const datosIP = intentosFallidos.get(ip);
-        if (datosIP && datosIP.count >= 3) {
+        if (datosIP && datosIP.count >= INTENTOS_ANTES_DELAY) {
             await new Promise((resolve) => setTimeout(resolve, calcularDelay(datosIP.count)));
         }
 
@@ -240,8 +238,8 @@ const iniciarSesion = async (req, res) => {
         try {
             await registrarSesionDB(usuario.id, jti, expiraEn);
         } catch (dbError) {
-            console.error('Error al registrar sesión en DB:', dbError.message);
-            return res.status(500).json({ mensaje: 'Error interno del servidor.' });
+            const idError = logError('Auth.iniciarSesion.sesionDB', dbError);
+            return res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
         }
 
         return res.status(200).json({
@@ -256,8 +254,8 @@ const iniciarSesion = async (req, res) => {
             },
         });
     } catch (error) {
-        console.error('Error en inicio de sesión:', error.message);
-        return res.status(500).json({ mensaje: 'Error interno del servidor.' });
+        const idError = logError('Auth.iniciarSesion', error);
+        return res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
     }
 };
 
@@ -274,8 +272,8 @@ const obtenerPerfil = async (req, res) => {
 
         return res.status(200).json({ usuario: usuarios[0] });
     } catch (error) {
-        console.error('Error al obtener perfil:', error.message);
-        return res.status(500).json({ mensaje: 'Error interno del servidor.' });
+        const idError = logError('Auth.obtenerPerfil', error);
+        return res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
     }
 };
 
@@ -287,8 +285,8 @@ const cerrarSesion = async (req, res) => {
         );
         return res.status(200).json({ mensaje: 'Sesión cerrada correctamente.' });
     } catch (error) {
-        console.error('Error al cerrar sesión:', error.message);
-        return res.status(500).json({ mensaje: 'Error interno del servidor.' });
+        const idError = logError('Auth.cerrarSesion', error);
+        return res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
     }
 };
 
@@ -339,16 +337,16 @@ const recuperarPassword = async (req, res) => {
             );
         } catch (dbError) {
             // Si la tabla no tiene estas columnas, solo responder exitosamente
-            console.warn('Advertencia: Columnas de recuperación no existen en usuarios');
+            logWarn('Auth.recuperarPassword', 'Columnas de recuperación no existen en usuarios.');
         }
 
-        // TODO: En producción, enviar email con link: /reset-password?token=tokenRecuperacion
-        console.log(`Token de recuperación para ${emailNormalizado}: ${tokenRecuperacion}`);
+        // En producción se envía por email; en desarrollo se logea para testear
+        logDev('Auth.recuperarPassword', `Token para ${emailNormalizado}: ${tokenRecuperacion}`);
 
         return res.status(200).json({ mensaje: 'Si el email existe, recibirás instrucciones de recuperación.' });
     } catch (error) {
-        console.error('Error en recuperación de password:', error.message);
-        return res.status(500).json({ mensaje: 'Error interno del servidor.' });
+        const idError = logError('Auth.recuperarPassword', error);
+        return res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
     }
 };
 
