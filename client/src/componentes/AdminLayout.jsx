@@ -60,8 +60,8 @@ const IconClose = () => (
 const NAV_ITEMS = [
     { to: '/admin/dashboard', icon: IconDashboard, label: 'Dashboard' },
     { to: '/admin/usuarios', icon: IconUsuarios, label: 'Gestión Usuarios' },
-    { to: '/admin/eventos',  icon: IconEventos,  label: 'Gestión Eventos'  },
-    { to: '/admin/compras',  icon: IconCompras,  label: 'Gestión Compras'  },
+    { to: '/admin/eventos', icon: IconEventos, label: 'Gestión Eventos' },
+    { to: '/admin/compras', icon: IconCompras, label: 'Gestión Compras' },
 ];
 
 const ItemNav = ({ to, icon: Icono, label, onClick }) => (
@@ -69,10 +69,9 @@ const ItemNav = ({ to, icon: Icono, label, onClick }) => (
         to={to}
         onClick={onClick}
         className={({ isActive }) =>
-            `flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors duration-150 border-l-2 ${
-                isActive
-                    ? 'text-white bg-white/[0.05] border-purple-500'
-                    : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.03] border-transparent'
+            `flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors duration-150 border-l-2 ${isActive
+                ? 'text-white bg-white/[0.05] border-purple-500'
+                : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.03] border-transparent'
             }`
         }
     >

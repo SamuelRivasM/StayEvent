@@ -4,18 +4,17 @@ import api from '../servicios/api';
 import { useAuth } from '../context/AuthContext';
 
 const PAISES = [
-    { codigo: '+51',  label: 'PE +51'  },
-    { codigo: '+56',  label: 'CL +56'  },
-    { codigo: '+54',  label: 'AR +54'  },
-    { codigo: '+57',  label: 'CO +57'  },
-    { codigo: '+52',  label: 'MX +52'  },
-    { codigo: '+593', label: 'EC +593' },
-    { codigo: '+591', label: 'BO +591' },
-    { codigo: '+598', label: 'UY +598' },
-    { codigo: '+595', label: 'PY +595' },
+    { codigo: '+51', label: 'PE +51', digitos: 9, placeholder: '999999999' },
+    { codigo: '+56', label: 'CL +56', digitos: 9, placeholder: '912345678' },
+    { codigo: '+54', label: 'AR +54', digitos: 10, placeholder: '1123456789' },
+    { codigo: '+57', label: 'CO +57', digitos: 10, placeholder: '3001234567' },
+    { codigo: '+52', label: 'MX +52', digitos: 10, placeholder: '5512345678' },
+    { codigo: '+593', label: 'EC +593', digitos: 9, placeholder: '991234567' },
+    { codigo: '+591', label: 'BO +591', digitos: 8, placeholder: '71234567' },
+    { codigo: '+598', label: 'UY +598', digitos: 8, placeholder: '91234567' },
+    { codigo: '+595', label: 'PY +595', digitos: 9, placeholder: '981234567' },
 ];
 
-// Códigos más largos primero para evitar falsos positivos en el prefijo
 const CODIGOS_ORDENADOS = ['+593', '+591', '+598', '+595', '+51', '+56', '+54', '+57', '+52'];
 
 function parseTelefono(telefonoCompleto) {
@@ -31,6 +30,7 @@ function parseTelefono(telefonoCompleto) {
 // Local part: letras/dígitos y . _ % + - ; dominio sin espacios ni chars inválidos; TLD solo letras, mínimo 2
 const REGEX_EMAIL = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const REGEX_CARACTER_ESPECIAL = /[$%#]/;
+const REGEX_SOLO_NUMEROS = /^\d+$/;
 
 const labelCls = 'block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5';
 const inputCls = 'w-full px-4 py-2.5 bg-white/[0.05] text-sm text-white placeholder-gray-600 border border-white/[0.08] focus:outline-none focus:border-purple-500/60 focus:ring-1 focus:ring-purple-500/30 transition-colors';
@@ -45,6 +45,8 @@ const ConfigurarPerfil = () => {
     const [passForm, setPassForm] = useState({
         passwordActual: '', passwordNueva: '', confirmarPassword: '',
     });
+    const paisActual = PAISES.find(p => p.codigo === formulario.codigoPais) || PAISES[0];
+
     const [cargando, setCargando] = useState(true);
     const [guardando, setGuardando] = useState(false);
     const [error, setError] = useState('');
@@ -74,12 +76,23 @@ const ConfigurarPerfil = () => {
 
     const manejarCambio = (e) => {
         const { name, value } = e.target;
+        let formatted = value;
+        if (name === 'nombre' || name === 'apellido') {
+            formatted = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ '-]/g, '').slice(0, 50);
+        }
         setFormulario(prev => ({
             ...prev,
-            [name]: value,
+            [name]: formatted,
             // Al cambiar el país se borra el teléfono para evitar longitudes inválidas
             ...(name === 'codigoPais' ? { telefono: '' } : {}),
         }));
+        setError('');
+        setExito('');
+    };
+
+    const manejarCambioTelefono = (e) => {
+        const soloNumeros = e.target.value.replace(/\D/g, '').slice(0, paisActual.digitos);
+        setFormulario(prev => ({ ...prev, telefono: soloNumeros }));
         setError('');
         setExito('');
     };
@@ -100,14 +113,24 @@ const ConfigurarPerfil = () => {
         if (formulario.nombre.trim().length > 50 || formulario.apellido.trim().length > 50) {
             return 'Nombre y apellido no deben exceder 50 caracteres.';
         }
+        const REGEX_NOMBRE = /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ '-]+$/;
+        if (!REGEX_NOMBRE.test(formulario.nombre.trim())) {
+            return 'El nombre solo puede contener letras, espacios, apóstrofes y guiones.';
+        }
+        if (!REGEX_NOMBRE.test(formulario.apellido.trim())) {
+            return 'El apellido solo puede contener letras, espacios, apóstrofes y guiones.';
+        }
         if (!REGEX_EMAIL.test(formulario.email.trim())) {
             return 'Ingresa un email válido.';
         }
         if (!formulario.telefono.trim()) {
             return 'El teléfono es obligatorio.';
         }
-        if (!/^\d+$/.test(formulario.telefono.trim())) {
+        if (!REGEX_SOLO_NUMEROS.test(formulario.telefono.trim())) {
             return 'El teléfono solo debe contener números.';
+        }
+        if (formulario.telefono.trim().length !== paisActual.digitos) {
+            return `El teléfono debe tener exactamente ${paisActual.digitos} dígitos para ${paisActual.label.split(' ')[0]}.`;
         }
         const cambiandoPass = passForm.passwordActual || passForm.passwordNueva || passForm.confirmarPassword;
         if (cambiandoPass) {
@@ -263,9 +286,9 @@ const ConfigurarPerfil = () => {
                                         type="tel"
                                         name="telefono"
                                         value={formulario.telefono}
-                                        onChange={manejarCambio}
-                                        maxLength={10}
-                                        placeholder="Número sin código de país"
+                                        onChange={manejarCambioTelefono}
+                                        maxLength={paisActual.digitos}
+                                        placeholder={paisActual.placeholder}
                                         className={`${inputCls} flex-1`}
                                         autoComplete="tel-national"
                                     />

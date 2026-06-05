@@ -166,6 +166,7 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
         if (name === 'numeroTarjeta') formatted = aplicarFormatoTarjeta(value);
         if (name === 'expiracion') formatted = aplicarFormatoExpiracion(value);
         if (name === 'cvv') formatted = value.replace(/\D/g, '').slice(0, 4);
+        if (name === 'titular') formatted = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ '-]/g, '').slice(0, 50);
         setPago(p => ({ ...p, [name]: formatted }));
         setErroresPago(prev => ({ ...prev, [name]: '' }));
     }, []);
@@ -174,7 +175,16 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
         const errors = {};
         const digits = pago.numeroTarjeta.replace(/\s/g, '');
         if (digits.length < 13 || digits.length > 16) errors.numeroTarjeta = 'Número de tarjeta inválido.';
-        if (!pago.titular.trim() || pago.titular.trim().length < 3) errors.titular = 'Ingresa el nombre del titular.';
+        const titularTrim = pago.titular.trim();
+        if (!titularTrim) {
+            errors.titular = 'El nombre del titular es obligatorio.';
+        } else if (titularTrim.length < 2) {
+            errors.titular = 'El nombre debe tener al menos 2 caracteres.';
+        } else if (titularTrim.length > 50) {
+            errors.titular = 'El nombre no puede superar los 50 caracteres.';
+        } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ' -]+$/.test(titularTrim)) {
+            errors.titular = 'Solo se permiten letras, espacios, apóstrofes y guiones.';
+        }
         const partes = pago.expiracion.split('/');
         const mm = Number(partes[0]);
         const yy = partes[1];

@@ -169,6 +169,18 @@ const GestionEventos = () => {
             setErrorModal('La fecha del evento no puede ser anterior a hoy.');
             return;
         }
+        if (formularioRef.current.fecha && formularioRef.current.fecha > '9999-12-31') {
+            setErrorModal('El año del evento no puede superar 9999.');
+            return;
+        }
+        if (formularioRef.current.fecha === hoy && formularioRef.current.hora) {
+            const ahora = new Date();
+            const horaActual = `${String(ahora.getHours()).padStart(2, '0')}:${String(ahora.getMinutes()).padStart(2, '0')}`;
+            if (formularioRef.current.hora <= horaActual) {
+                setErrorModal('Si el evento es hoy, la hora debe ser posterior a la hora actual.');
+                return;
+            }
+        }
 
         for (const zona of zonasRef.current) {
             const precio = parseFloat(zona.precio);
@@ -385,7 +397,7 @@ const GestionEventos = () => {
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
-                                <Campo label="Fecha *" name="fecha" type="date" value={formulario.fecha} onChange={manejarCambio} required min={fechaHoy()} />
+                                <Campo label="Fecha *" name="fecha" type="date" value={formulario.fecha} onChange={manejarCambio} required min={fechaHoy()} max="9999-12-31" />
                                 <Campo label="Hora *" name="hora" type="time" value={formulario.hora} onChange={manejarCambio} required />
                             </div>
 

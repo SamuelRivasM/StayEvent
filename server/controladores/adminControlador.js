@@ -3,7 +3,12 @@
 const bcrypt = require('bcryptjs');
 const { pool } = require('../config/db');
 const { logError } = require('../config/logger');
-const { SALT_ROUNDS, REGEX_CARACTER_ESPECIAL, ROLES_EDITABLES } = require('../config/constantes');
+const {
+    SALT_ROUNDS, REGEX_CARACTER_ESPECIAL, ROLES_EDITABLES, ROLES_VALIDOS,
+    DIGITOS_POR_PAIS, REGEX_EMAIL, REGEX_SOLO_NUMEROS,
+    MAX_EMAIL_LENGTH, MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH,
+    MAX_NOMBRE_LENGTH, MIN_NOMBRE_LENGTH,
+} = require('../config/constantes');
 
 const ROLES_EDITABLES_SET = new Set(ROLES_EDITABLES);
 
@@ -51,6 +56,92 @@ const obtenerMetricas = async (req, res) => {
 };
 
 // ─── Gestión de Usuarios ──────────────────────────────────────────────────────
+
+const crearUsuarioAdmin = async (req, res) => {
+    try {
+        const CAMPOS_CREAR = new Set(['nombre', 'apellido', 'email', 'password', 'codigoPais', 'telefono', 'rol']);
+        const extras = Object.keys(req.body || {}).filter(c => !CAMPOS_CREAR.has(c));
+        if (extras.length) return res.status(400).json({ mensaje: 'Campos no permitidos.' });
+
+        const { nombre, apellido, email, password, codigoPais, telefono, rol } = req.body;
+
+        for (const [campo, val] of Object.entries({ nombre, apellido, email, password, telefono })) {
+            if (typeof val !== 'string') {
+                return res.status(400).json({ mensaje: `El campo ${campo} debe ser texto.` });
+            }
+        }
+
+        if (!nombre.trim() || !apellido.trim() || !email.trim() || !password || !telefono.trim()) {
+            return res.status(400).json({ mensaje: 'Todos los campos son obligatorios.' });
+        }
+        if (nombre.trim().length > MAX_NOMBRE_LENGTH || apellido.trim().length > MAX_NOMBRE_LENGTH) {
+            return res.status(400).json({ mensaje: `Nombre y apellido no deben superar ${MAX_NOMBRE_LENGTH} caracteres.` });
+        }
+        if (email.trim().length > MAX_EMAIL_LENGTH) {
+            return res.status(400).json({ mensaje: `El email no debe superar ${MAX_EMAIL_LENGTH} caracteres.` });
+        }
+        if (password.length > MAX_PASSWORD_LENGTH) {
+            return res.status(400).json({ mensaje: 'La contraseña no debe exceder 72 caracteres.' });
+        }
+        if (!REGEX_EMAIL.test(email.trim())) {
+            return res.status(400).json({ mensaje: 'Formato de email inválido.' });
+        }
+        if (nombre.trim().length < MIN_NOMBRE_LENGTH || apellido.trim().length < MIN_NOMBRE_LENGTH) {
+            return res.status(400).json({ mensaje: 'Nombre y apellido deben tener al menos 2 caracteres.' });
+        }
+        if (password.length < MIN_PASSWORD_LENGTH) {
+            return res.status(400).json({ mensaje: `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.` });
+        }
+        if (!REGEX_CARACTER_ESPECIAL.test(password)) {
+            return res.status(400).json({ mensaje: 'La contraseña debe contener al menos un carácter especial ($, %, #).' });
+        }
+
+        const codigoPaisNorm = (typeof codigoPais === 'string' && codigoPais.trim()) ? codigoPais.trim() : '+51';
+        if (!DIGITOS_POR_PAIS[codigoPaisNorm]) {
+            return res.status(400).json({ mensaje: 'Código de país no reconocido.' });
+        }
+        if (!REGEX_SOLO_NUMEROS.test(telefono.trim())) {
+            return res.status(400).json({ mensaje: 'El teléfono debe contener solo dígitos.' });
+        }
+        const digitosEsperados = DIGITOS_POR_PAIS[codigoPaisNorm];
+        if (telefono.trim().length !== digitosEsperados) {
+            return res.status(400).json({
+                mensaje: `El teléfono debe tener exactamente ${digitosEsperados} dígitos para el país seleccionado.`,
+            });
+        }
+
+        const rolNorm = (typeof rol === 'string' && rol.trim()) ? rol.trim().toLowerCase() : 'usuario';
+        if (!ROLES_VALIDOS.includes(rolNorm)) {
+            return res.status(400).json({ mensaje: 'Rol inválido.' });
+        }
+
+        const [existe] = await pool.query('SELECT id FROM usuarios WHERE email = ?', [email.toLowerCase().trim()]);
+        if (existe.length) return res.status(409).json({ mensaje: 'Ya existe un usuario con ese email.' });
+
+        const passwordHash    = await bcrypt.hash(password, SALT_ROUNDS);
+        const telefonoCompleto = codigoPaisNorm + telefono.trim();
+
+        const [result] = await pool.execute(
+            'INSERT INTO usuarios (nombre, apellido, email, password, telefono, rol) VALUES (?, ?, ?, ?, ?, ?)',
+            [nombre.trim(), apellido.trim(), email.toLowerCase().trim(), passwordHash, telefonoCompleto, rolNorm]
+        );
+
+        res.status(201).json({
+            mensaje: 'Usuario creado correctamente.',
+            usuario: {
+                id:       result.insertId,
+                nombre:   nombre.trim(),
+                apellido: apellido.trim(),
+                email:    email.toLowerCase().trim(),
+                telefono: telefonoCompleto,
+                rol:      rolNorm,
+            },
+        });
+    } catch (error) {
+        const idError = logError('Admin.crearUsuarioAdmin', error);
+        res.status(500).json({ mensaje: 'Error al crear usuario.', referencia: idError });
+    }
+};
 
 const listarUsuarios = async (req, res) => {
     try {
@@ -124,16 +215,27 @@ const editarUsuario = async (req, res) => {
         }
 
         if (rol !== undefined) {
-            if (typeof rol !== 'string' || !ROLES_EDITABLES_SET.has(rol)) {
-                return res.status(400).json({ mensaje: 'Rol inválido. Solo se permite usuario u organizador.' });
+            if (typeof rol !== 'string' || !ROLES_VALIDOS.includes(rol)) {
+                return res.status(400).json({ mensaje: 'Rol inválido.' });
             }
         }
 
-        // Verificar que el objetivo no sea admin (nunca aparece en lista, doble check)
-        const [objetivo] = await pool.query('SELECT rol FROM usuarios WHERE id = ?', [id]);
+        const [objetivo] = await pool.query('SELECT id, rol FROM usuarios WHERE id = ?', [id]);
         if (!objetivo.length) return res.status(404).json({ mensaje: 'Usuario no encontrado.' });
-        if (objetivo[0].rol === 'admin') {
-            return res.status(403).json({ mensaje: 'No se puede modificar un administrador.' });
+
+        // Validaciones de seguridad sobre cambio de rol
+        if (rol !== undefined && rol !== objetivo[0].rol) {
+            // Un admin no puede quitarse a sí mismo el rol de administrador
+            if (id === req.usuario.id && rol !== 'admin') {
+                return res.status(403).json({ mensaje: 'No puedes cambiar tu propio rol a uno distinto de administrador.' });
+            }
+            // No se puede degradar al único administrador del sistema
+            if (objetivo[0].rol === 'admin' && rol !== 'admin') {
+                const [rowsAdmin] = await pool.query("SELECT COUNT(*) AS total FROM usuarios WHERE rol = 'admin'");
+                if (Number(rowsAdmin[0].total) <= 1) {
+                    return res.status(403).json({ mensaje: 'No se puede cambiar el rol del único administrador del sistema.' });
+                }
+            }
         }
 
         const campos  = ['nombre = ?', 'apellido = ?', 'telefono = ?'];
@@ -171,6 +273,35 @@ const editarUsuario = async (req, res) => {
     } catch (error) {
         const idError = logError('Admin.editarUsuario', error);
         res.status(500).json({ mensaje: 'Error al actualizar usuario.', referencia: idError });
+    }
+};
+
+const eliminarUsuario = async (req, res) => {
+    try {
+        const id = parseInt(req.params.id, 10);
+        if (isNaN(id)) return res.status(400).json({ mensaje: 'ID inválido.' });
+
+        // Un admin no puede eliminar su propia cuenta
+        if (id === req.usuario.id) {
+            return res.status(403).json({ mensaje: 'No puedes eliminar tu propia cuenta.' });
+        }
+
+        const [rows] = await pool.query('SELECT id, rol FROM usuarios WHERE id = ?', [id]);
+        if (!rows.length) return res.status(404).json({ mensaje: 'Usuario no encontrado.' });
+
+        // No se puede eliminar al único administrador del sistema
+        if (rows[0].rol === 'admin') {
+            const [rowsAdmin] = await pool.query("SELECT COUNT(*) AS total FROM usuarios WHERE rol = 'admin'");
+            if (Number(rowsAdmin[0].total) <= 1) {
+                return res.status(403).json({ mensaje: 'No se puede eliminar al único administrador del sistema.' });
+            }
+        }
+
+        await pool.execute('DELETE FROM usuarios WHERE id = ?', [id]);
+        res.json({ mensaje: 'Usuario eliminado correctamente.' });
+    } catch (error) {
+        const idError = logError('Admin.eliminarUsuario', error);
+        res.status(500).json({ mensaje: 'Error al eliminar usuario.', referencia: idError });
     }
 };
 
@@ -254,9 +385,11 @@ const cambiarEstadoEvento = async (req, res) => {
 
 module.exports = {
     obtenerMetricas,
+    crearUsuarioAdmin,
     listarUsuarios,
     obtenerUsuario,
     editarUsuario,
+    eliminarUsuario,
     listarEventosAdmin,
     obtenerEventoAdmin,
     cambiarEstadoEvento,

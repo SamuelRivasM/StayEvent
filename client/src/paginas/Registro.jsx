@@ -112,7 +112,12 @@ const Registro = () => {
     // Autenticación
 
     const manejarCambio = (e) => {
-        setFormulario((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+        const { name, value } = e.target;
+        let formatted = value;
+        if (name === 'nombre' || name === 'apellido') {
+            formatted = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ '-]/g, '').slice(0, 50);
+        }
+        setFormulario((prev) => ({ ...prev, [name]: formatted }));
         setError('');
     };
 
@@ -127,6 +132,16 @@ const Registro = () => {
         }
         if (nombre.length < 2 || apellido.length < 2) {
             return 'Nombre y apellido deben tener al menos 2 caracteres.';
+        }
+        if (nombre.length > 50 || apellido.length > 50) {
+            return 'Nombre y apellido no deben exceder 50 caracteres.';
+        }
+        const REGEX_NOMBRE = /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ '-]+$/;
+        if (!REGEX_NOMBRE.test(nombre)) {
+            return 'El nombre solo puede contener letras, espacios, apóstrofes y guiones.';
+        }
+        if (!REGEX_NOMBRE.test(apellido)) {
+            return 'El apellido solo puede contener letras, espacios, apóstrofes y guiones.';
         }
         if (!email) {
             return 'El correo electrónico es obligatorio.';

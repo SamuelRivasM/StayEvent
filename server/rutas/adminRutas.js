@@ -5,9 +5,11 @@ const { verificarToken } = require('../middlewares/authMiddleware');
 const { logError } = require('../config/logger');
 const {
     obtenerMetricas,
+    crearUsuarioAdmin,
     listarUsuarios,
     obtenerUsuario,
     editarUsuario,
+    eliminarUsuario,
     listarEventosAdmin,
     obtenerEventoAdmin,
     cambiarEstadoEvento,
@@ -35,9 +37,11 @@ const esAdmin = async (req, res, next) => {
 router.get('/metricas', verificarToken, esAdmin, obtenerMetricas);
 
 // Gestión de usuarios
-router.get('/usuarios',     verificarToken, esAdmin, listarUsuarios);
-router.get('/usuarios/:id', verificarToken, esAdmin, obtenerUsuario);
-router.put('/usuarios/:id', verificarToken, esAdmin, editarUsuario);
+router.post('/usuarios',        verificarToken, esAdmin, crearUsuarioAdmin);
+router.get('/usuarios',         verificarToken, esAdmin, listarUsuarios);
+router.get('/usuarios/:id',     verificarToken, esAdmin, obtenerUsuario);
+router.put('/usuarios/:id',     verificarToken, esAdmin, editarUsuario);
+router.delete('/usuarios/:id',  verificarToken, esAdmin, eliminarUsuario);
 
 // Gestión de eventos
 router.get('/eventos',              verificarToken, esAdmin, listarEventosAdmin);

@@ -65,13 +65,6 @@ const MESES_ES = [
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ];
 
-const formatFechaCorta = (fecha) => {
-    if (!fecha) return '—';
-    return new Date(fecha).toLocaleDateString('es-PE', {
-        day: '2-digit', month: 'short', year: 'numeric',
-    });
-};
-
 const formatFechaHora = (fecha) => {
     if (!fecha) return '—';
     return new Date(fecha).toLocaleString('es-PE', {
