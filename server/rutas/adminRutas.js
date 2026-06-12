@@ -5,6 +5,7 @@ const { verificarToken } = require('../middlewares/authMiddleware');
 const { logError } = require('../config/logger');
 const {
     obtenerMetricas,
+    obtenerMetricasDashboard,
     crearUsuarioAdmin,
     listarUsuarios,
     obtenerUsuario,
@@ -34,7 +35,8 @@ const esAdmin = async (req, res, next) => {
 };
 
 // Dashboard
-router.get('/metricas', verificarToken, esAdmin, obtenerMetricas);
+router.get('/metricas',           verificarToken, esAdmin, obtenerMetricas);
+router.get('/metricas-dashboard', verificarToken, esAdmin, obtenerMetricasDashboard);
 
 // Gestión de usuarios
 router.post('/usuarios',        verificarToken, esAdmin, crearUsuarioAdmin);

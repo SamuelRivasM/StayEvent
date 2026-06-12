@@ -55,6 +55,218 @@ const obtenerMetricas = async (req, res) => {
     }
 };
 
+// ─── Dashboard Analítico (endpoint ampliado) ──────────────────────────────────
+//
+// Devuelve toda la información necesaria para el dashboard analítico:
+//   - KPIs con crecimiento mes a mes
+//   - Tendencia de ingresos y tickets (últimos 30 días)
+//   - Top 5 eventos por recaudación
+//   - Distribución de ventas por categoría de zona
+//   - Últimas transacciones de la plataforma
+//
+// Todas las consultas se ejecutan en paralelo con Promise.all para reducir
+// la latencia total del endpoint.
+
+const obtenerMetricasDashboard = async (req, res) => {
+    try {
+        const [
+            [rowsIngresosMesActual],
+            [rowsIngresosMesAnterior],
+            [rowsTicketsVendidos],
+            [rowsCapacidadRestante],
+            [rowsEventosActivos],
+            [rowsEventosTotales],
+            [rowsUsuariosTotal],
+            [rowsOrganizadores],
+            [rowsUsuariosNuevos],
+            [rowsTendencia],
+            [rowsTopEventos],
+            [rowsDistribucion],
+            [rowsActividad],
+        ] = await Promise.all([
+
+            // ── KPI 1: Ingresos del mes actual ───────────────────
+            pool.query(`
+                SELECT COALESCE(SUM(subtotal), 0) AS total
+                FROM compras
+                WHERE estado = 'confirmado'
+                  AND MONTH(fecha_compra) = MONTH(CURRENT_DATE())
+                  AND YEAR(fecha_compra)  = YEAR(CURRENT_DATE())
+            `),
+
+            // ── KPI 1b: Ingresos del mes anterior ────────────────
+            pool.query(`
+                SELECT COALESCE(SUM(subtotal), 0) AS total
+                FROM compras
+                WHERE estado = 'confirmado'
+                  AND MONTH(fecha_compra) = MONTH(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
+                  AND YEAR(fecha_compra)  = YEAR(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
+            `),
+
+            // ── KPI 2: Tickets vendidos (eventos activos) ────────
+            pool.query(`
+                SELECT COALESCE(SUM(c.cantidad), 0) AS total
+                FROM compras c
+                JOIN eventos e ON c.evento_id = e.id
+                WHERE c.estado = 'confirmado'
+                  AND e.activo = 1 AND e.eliminado = 0
+            `),
+
+            // ── KPI 2b: Stock restante (capacidad disponible) ────
+            pool.query(`
+                SELECT COALESCE(SUM(z.stock), 0) AS total
+                FROM zonas_evento z
+                JOIN eventos e ON z.evento_id = e.id
+                WHERE z.activo = 1 AND e.activo = 1 AND e.eliminado = 0
+            `),
+
+            // ── KPI 3: Eventos activos ───────────────────────────
+            pool.query(
+                'SELECT COUNT(*) AS total FROM eventos WHERE activo = 1 AND eliminado = 0'
+            ),
+
+            // ── KPI 3b: Eventos totales (no eliminados) ──────────
+            pool.query(
+                'SELECT COUNT(*) AS total FROM eventos WHERE eliminado = 0'
+            ),
+
+            // ── KPI 4: Usuarios totales ──────────────────────────
+            pool.query(
+                "SELECT COUNT(*) AS total FROM usuarios WHERE rol IN ('usuario', 'organizador')"
+            ),
+
+            // ── KPI 4b: Organizadores ────────────────────────────
+            pool.query(
+                "SELECT COUNT(*) AS total FROM usuarios WHERE rol = 'organizador'"
+            ),
+
+            // ── KPI 4c: Usuarios nuevos esta semana ──────────────
+            pool.query(`
+                SELECT COUNT(*) AS total FROM usuarios
+                WHERE created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+                  AND rol IN ('usuario', 'organizador')
+            `),
+
+            // ── Gráfico: Tendencia últimos 30 días ───────────────
+            pool.query(`
+                SELECT DATE(fecha_compra) AS dia,
+                       COALESCE(SUM(subtotal), 0) AS ingresos,
+                       COALESCE(SUM(cantidad), 0) AS tickets
+                FROM compras
+                WHERE estado = 'confirmado'
+                  AND fecha_compra >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+                GROUP BY DATE(fecha_compra)
+                ORDER BY dia ASC
+            `),
+
+            // ── Gráfico: Top 5 eventos por recaudación ───────────
+            pool.query(`
+                SELECT e.titulo,
+                       COALESCE(SUM(c.subtotal), 0) AS recaudacion,
+                       COALESCE(SUM(c.cantidad), 0) AS asistencia
+                FROM compras c
+                JOIN eventos e ON c.evento_id = e.id
+                WHERE c.estado = 'confirmado' AND e.eliminado = 0
+                GROUP BY e.id, e.titulo
+                ORDER BY recaudacion DESC
+                LIMIT 5
+            `),
+
+            // ── Gráfico: Distribución por categoría de zona ──────
+            pool.query(`
+                SELECT z.nombre AS categoria,
+                       COALESCE(SUM(c.cantidad), 0) AS tickets,
+                       COALESCE(SUM(c.subtotal), 0) AS ingresos
+                FROM compras c
+                JOIN zonas_evento z ON c.zona_id = z.id
+                WHERE c.estado = 'confirmado'
+                GROUP BY z.nombre
+                ORDER BY tickets DESC
+            `),
+
+            // ── Tabla: Actividad reciente (últimas 20) ───────────
+            pool.query(`
+                SELECT c.id,
+                       c.cantidad,
+                       c.subtotal,
+                       c.estado,
+                       c.fecha_compra,
+                       u.nombre AS usuario_nombre,
+                       u.apellido AS usuario_apellido,
+                       e.titulo AS evento_titulo
+                FROM compras c
+                JOIN usuarios u ON c.usuario_id = u.id
+                JOIN eventos e ON c.evento_id = e.id
+                ORDER BY c.fecha_compra DESC
+                LIMIT 20
+            `),
+        ]);
+
+        // Cálculo del % de crecimiento de ingresos
+        const ingresosMesActual   = parseFloat(rowsIngresosMesActual[0].total);
+        const ingresosMesAnterior = parseFloat(rowsIngresosMesAnterior[0].total);
+        const crecimientoIngresos = ingresosMesAnterior > 0
+            ? ((ingresosMesActual - ingresosMesAnterior) / ingresosMesAnterior) * 100
+            : ingresosMesActual > 0 ? 100 : 0;
+
+        // Tickets vendidos y capacidad
+        const ticketsVendidos   = Number(rowsTicketsVendidos[0].total);
+        const capacidadRestante = Number(rowsCapacidadRestante[0].total);
+        const capacidadTotal    = ticketsVendidos + capacidadRestante;
+
+        res.json({
+            kpis: {
+                ingresos: {
+                    actual:      ingresosMesActual,
+                    anterior:    ingresosMesAnterior,
+                    crecimiento: Math.round(crecimientoIngresos * 10) / 10,
+                },
+                tickets: {
+                    vendidos:  ticketsVendidos,
+                    capacidad: capacidadTotal,
+                },
+                eventos: {
+                    activos: Number(rowsEventosActivos[0].total),
+                    totales: Number(rowsEventosTotales[0].total),
+                },
+                usuarios: {
+                    total:         Number(rowsUsuariosTotal[0].total),
+                    organizadores: Number(rowsOrganizadores[0].total),
+                    nuevosEstaSemana: Number(rowsUsuariosNuevos[0].total),
+                },
+            },
+            tendencia30dias: rowsTendencia.map(r => ({
+                dia:      r.dia,
+                ingresos: parseFloat(r.ingresos),
+                tickets:  Number(r.tickets),
+            })),
+            topEventos: rowsTopEventos.map(r => ({
+                titulo:      r.titulo,
+                recaudacion: parseFloat(r.recaudacion),
+                asistencia:  Number(r.asistencia),
+            })),
+            distribucion: rowsDistribucion.map(r => ({
+                categoria: r.categoria,
+                tickets:   Number(r.tickets),
+                ingresos:  parseFloat(r.ingresos),
+            })),
+            actividadReciente: rowsActividad.map(r => ({
+                id:       r.id,
+                tipo:     'Compra de Ticket',
+                usuario:  `${r.usuario_nombre} ${r.usuario_apellido}`,
+                evento:   r.evento_titulo,
+                cantidad: r.cantidad,
+                monto:    parseFloat(r.subtotal),
+                estado:   r.estado,
+                fecha:    r.fecha_compra,
+            })),
+        });
+    } catch (error) {
+        const idError = logError('Admin.obtenerMetricasDashboard', error);
+        res.status(500).json({ mensaje: 'Error al obtener métricas del dashboard.', referencia: idError });
+    }
+};
+
 // ─── Gestión de Usuarios ──────────────────────────────────────────────────────
 
 const crearUsuarioAdmin = async (req, res) => {
@@ -385,6 +597,7 @@ const cambiarEstadoEvento = async (req, res) => {
 
 module.exports = {
     obtenerMetricas,
+    obtenerMetricasDashboard,
     crearUsuarioAdmin,
     listarUsuarios,
     obtenerUsuario,

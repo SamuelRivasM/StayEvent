@@ -1,40 +1,40 @@
+// ─── AdminDashboard — Dashboard analítico del administrador ───────────────────
+//
+// Panel centralizado con:
+//   - 4 KPI cards con indicadores de crecimiento
+//   - Gráfico de tendencia de ingresos y tickets (30 días)
+//   - Panel de insights y alertas inteligentes
+//   - Gráfico de barras: Top 5 eventos por recaudación
+//   - Gráfico donut: distribución de ventas por categoría
+//   - Tabla de actividad global reciente (paginada)
+//
+// Intenta cargar datos del backend (GET /api/admin/metricas-dashboard).
+// Si falla, cae automáticamente a datos mock para visualización inmediata.
+
 import React, { useState, useEffect } from 'react';
 import api from '../servicios/api';
+import { MOCK_DASHBOARD, MOCK_ALERTAS } from './dashboard/dashboardData';
+import KpiCard from './dashboard/KpiCard';
+import RevenueChart from './dashboard/RevenueChart';
+import TopEventsChart from './dashboard/TopEventsChart';
+import TicketDistributionChart from './dashboard/TicketDistributionChart';
+import InsightsPanel from './dashboard/InsightsPanel';
+import ActivityTable from './dashboard/ActivityTable';
 
-const IconUsuarios = () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-    </svg>
-);
+// ─── Animaciones globales del dashboard ───────────────────────────────────────
 
-const IconOrganizadores = () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-    </svg>
-);
+const KEYFRAMES = `
+    @keyframes fadeSlideIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: translateY(0);   }
+    }
+    @keyframes pulseGlow {
+        0%, 100% { opacity: 0.6; }
+        50%      { opacity: 1;   }
+    }
+`;
 
-const IconEventoActivo = () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-            d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-    </svg>
-);
-
-const IconEventoTotal = () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-    </svg>
-);
-
-const IconCompras = () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-    </svg>
-);
+// ─── Iconos para las KPI cards ────────────────────────────────────────────────
 
 const IconIngresos = () => (
     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -43,156 +43,113 @@ const IconIngresos = () => (
     </svg>
 );
 
-const Skeleton = () => (
-    <div className="w-20 h-7 bg-white/[0.06] animate-pulse rounded-sm" />
+const IconTickets = () => (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+            d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+    </svg>
 );
 
-const TarjetaMetrica = ({ titulo, valor, cargando, icono: Icono, colorFondo, colorIcono, colorValor, formato }) => {
-    const valorFormateado = () => {
-        if (valor === null || valor === undefined) return '—';
-        if (formato === 'currency') {
-            return `S/ ${Number(valor).toLocaleString('es-PE', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-            })}`;
-        }
-        return Number(valor).toLocaleString('es-PE');
-    };
+const IconEventos = () => (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+);
 
-    return (
-        <div className="bg-white/[0.02] border border-white/[0.06] p-5 hover:bg-white/[0.035] transition-colors shadow-[0_2px_12px_rgba(0,0,0,0.3)]">
-            <div className={`inline-flex items-center justify-center w-9 h-9 mb-4 ${colorFondo}`}>
-                <span className={colorIcono}>
-                    <Icono />
-                </span>
-            </div>
-            <div className={`text-2xl font-bold mb-1 ${cargando ? '' : colorValor}`}>
-                {cargando ? <Skeleton /> : valorFormateado()}
-            </div>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest leading-tight">
-                {titulo}
-            </p>
-        </div>
-    );
+const IconUsuarios = () => (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+);
+
+// ─── Fecha formateada para el header ──────────────────────────────────────────
+
+const obtenerFechaFormateada = () => {
+    const ahora = new Date();
+    return ahora.toLocaleDateString('es-PE', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    });
 };
 
-const SeccionMetricas = ({ titulo, tarjetas, cargando }) => (
-    <div className="mb-8">
-        <p className="text-[10px] text-gray-600 uppercase tracking-[0.22em] font-medium mb-4">
-            {titulo}
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {tarjetas.map((t) => (
-                <TarjetaMetrica key={t.titulo} {...t} cargando={cargando} />
-            ))}
-        </div>
-    </div>
-);
+// ─── Componente principal ─────────────────────────────────────────────────────
 
 const AdminDashboard = () => {
-    const [metricas, setMetricas] = useState(null);
+    const [datos, setDatos] = useState(null);
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState('');
+    const [usandoMock, setUsandoMock] = useState(false);
 
     useEffect(() => {
         let activo = true;
-        const cargar = async () => {
+
+        const cargarDatos = async () => {
             try {
-                const res = await api.get('/admin/metricas');
-                if (activo) setMetricas(res.data);
+                const res = await api.get('/admin/metricas-dashboard');
+                if (activo) {
+                    setDatos(res.data);
+                    setUsandoMock(false);
+                }
             } catch (err) {
                 if (!activo) return;
-                const status = err.response?.status;
-                const msg = err.response?.data?.mensaje || err.message;
-                console.error('[AdminDashboard] Error al cargar métricas — status:', status, '| msg:', msg);
-                setError(
-                    status === 403 ? 'Sin permisos para cargar las métricas (403).' :
-                    status === 401 ? 'Sesión expirada. Vuelve a iniciar sesión.' :
-                    status === 500 ? 'Error interno del servidor (500).' :
-                    'No se pudieron cargar las métricas. Verifica tu conexión.'
+
+                // Fallback a datos mock si el backend no está disponible
+                console.warn(
+                    '[AdminDashboard] Backend no disponible, usando datos mock.',
+                    err.response?.status || err.message
                 );
+                setDatos(MOCK_DASHBOARD);
+                setUsandoMock(true);
             } finally {
                 if (activo) setCargando(false);
             }
         };
-        cargar();
+
+        cargarDatos();
         return () => { activo = false; };
     }, []);
 
-    const seccionUsuarios = [
-        {
-            titulo: 'Total Usuarios',
-            valor: metricas?.usuarios.total,
-            icono: IconUsuarios,
-            colorFondo: 'bg-blue-500/[0.08]',
-            colorIcono: 'text-blue-400',
-            colorValor: 'text-white',
-        },
-        {
-            titulo: 'Total Organizadores',
-            valor: metricas?.usuarios.organizadores,
-            icono: IconOrganizadores,
-            colorFondo: 'bg-violet-500/[0.08]',
-            colorIcono: 'text-violet-400',
-            colorValor: 'text-white',
-        },
-    ];
-
-    const seccionEventos = [
-        {
-            titulo: 'Eventos Activos',
-            valor: metricas?.eventos.activos,
-            icono: IconEventoActivo,
-            colorFondo: 'bg-emerald-500/[0.08]',
-            colorIcono: 'text-emerald-400',
-            colorValor: 'text-white',
-        },
-        {
-            titulo: 'Eventos Totales',
-            valor: metricas?.eventos.totales,
-            icono: IconEventoTotal,
-            colorFondo: 'bg-purple-500/[0.08]',
-            colorIcono: 'text-purple-400',
-            colorValor: 'text-white',
-        },
-    ];
-
-    const seccionCompras = [
-        {
-            titulo: 'Compras Totales',
-            valor: metricas?.compras.total,
-            icono: IconCompras,
-            colorFondo: 'bg-orange-500/[0.08]',
-            colorIcono: 'text-orange-400',
-            colorValor: 'text-white',
-        },
-        {
-            titulo: 'Ingresos Totales',
-            valor: metricas?.compras.ingresos,
-            icono: IconIngresos,
-            colorFondo: 'bg-emerald-500/[0.08]',
-            colorIcono: 'text-emerald-400',
-            colorValor: 'text-emerald-400',
-            formato: 'currency',
-        },
-    ];
+    const kpis = datos?.kpis;
 
     return (
         <div className="px-5 py-8 sm:px-8">
+            <style>{KEYFRAMES}</style>
 
-            {/* Cabecera */}
-            <div className="mb-9">
-                <p className="text-xs text-gray-600 uppercase tracking-[0.2em] mb-2">
-                    Panel de Administrador
-                </p>
-                <h1 className="font-display text-2xl sm:text-3xl font-bold text-white leading-tight">
-                    Dashboard
-                </h1>
-                <div className="mt-3 h-px w-12 bg-gradient-to-r from-purple-500 to-transparent" />
+            {/* ── Cabecera ────────────────────────────────────────────── */}
+            <div className="mb-8" style={{ animation: 'fadeSlideIn 0.4s ease both' }}>
+                <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+                    <div>
+                        <p className="text-xs text-gray-600 uppercase tracking-[0.2em] mb-2">
+                            Panel de Administrador
+                        </p>
+                        <h1 className="font-display text-2xl sm:text-3xl font-bold text-white leading-tight">
+                            Dashboard
+                        </h1>
+                        <div className="mt-3 h-px w-12 bg-gradient-to-r from-purple-500 to-transparent" />
+                    </div>
+
+                    {/* Fecha actual + indicador de modo */}
+                    <div className="flex items-center gap-3">
+                        {usandoMock && (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider bg-amber-500/10 text-amber-400 rounded-sm">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" style={{ animation: 'pulseGlow 2s ease infinite' }} />
+                                Datos de prueba
+                            </span>
+                        )}
+                        <p className="text-xs text-gray-600 capitalize hidden sm:block">
+                            {obtenerFechaFormateada()}
+                        </p>
+                    </div>
+                </div>
             </div>
 
+            {/* ── Error banner ─────────────────────────────────────────── */}
             {error && (
-                <div className="bg-red-500/[0.08] border border-red-500/20 text-red-400 px-4 py-3 text-sm mb-8 flex items-center justify-between gap-4">
+                <div className="bg-red-500/[0.08] border border-red-500/20 text-red-400 px-4 py-3 text-sm mb-6 flex items-center justify-between gap-4">
                     <span>{error}</span>
                     <button
                         onClick={() => setError('')}
@@ -203,15 +160,95 @@ const AdminDashboard = () => {
                 </div>
             )}
 
-            <SeccionMetricas titulo="Usuarios"  tarjetas={seccionUsuarios} cargando={cargando} />
+            {/* ── KPI Cards ───────────────────────────────────────────── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <KpiCard
+                    titulo="Ingresos Totales"
+                    valor={kpis?.ingresos.actual}
+                    valorAnterior={kpis?.ingresos.anterior}
+                    crecimiento={kpis?.ingresos.crecimiento}
+                    icono={IconIngresos}
+                    colorAccento="#10b981"
+                    formato="currency"
+                    cargando={cargando}
+                    delay={0}
+                />
+                <KpiCard
+                    titulo="Entradas Vendidas"
+                    valor={kpis?.tickets.vendidos}
+                    icono={IconTickets}
+                    colorAccento="#8b5cf6"
+                    cargando={cargando}
+                    vendidos={kpis?.tickets.vendidos}
+                    capacidad={kpis?.tickets.capacidad}
+                    delay={60}
+                />
+                <KpiCard
+                    titulo="Eventos Activos"
+                    valor={kpis?.eventos.activos}
+                    icono={IconEventos}
+                    colorAccento="#f59e0b"
+                    cargando={cargando}
+                    subtexto={kpis ? `${kpis.eventos.totales} eventos totales` : undefined}
+                    delay={120}
+                />
+                <KpiCard
+                    titulo="Usuarios Activos"
+                    valor={kpis?.usuarios.total}
+                    icono={IconUsuarios}
+                    colorAccento="#3b82f6"
+                    cargando={cargando}
+                    subtexto={
+                        kpis
+                            ? `+${kpis.usuarios.nuevosEstaSemana} esta semana · ${kpis.usuarios.organizadores} organizadores`
+                            : undefined
+                    }
+                    delay={180}
+                />
+            </div>
 
-            <div className="h-px bg-white/[0.04] mb-8" />
+            {/* ── Gráfico de tendencia + Panel de Insights ────────────── */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+                <div
+                    className="lg:col-span-2"
+                    style={{ animation: 'fadeSlideIn 0.5s ease 200ms both' }}
+                >
+                    <RevenueChart
+                        datos={datos?.tendencia30dias || []}
+                        cargando={cargando}
+                    />
+                </div>
+                <div style={{ animation: 'fadeSlideIn 0.5s ease 280ms both' }}>
+                    <InsightsPanel
+                        alertas={MOCK_ALERTAS}
+                        cargando={cargando}
+                    />
+                </div>
+            </div>
 
-            <SeccionMetricas titulo="Eventos"   tarjetas={seccionEventos}  cargando={cargando} />
+            {/* ── Gráfico de barras + Gráfico donut ───────────────────── */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+                <div style={{ animation: 'fadeSlideIn 0.5s ease 360ms both' }}>
+                    <TopEventsChart
+                        datos={datos?.topEventos || []}
+                        cargando={cargando}
+                    />
+                </div>
+                <div style={{ animation: 'fadeSlideIn 0.5s ease 440ms both' }}>
+                    <TicketDistributionChart
+                        datos={datos?.distribucion || []}
+                        cargando={cargando}
+                    />
+                </div>
+            </div>
 
-            <div className="h-px bg-white/[0.04] mb-8" />
-
-            <SeccionMetricas titulo="Compras"   tarjetas={seccionCompras}  cargando={cargando} />
+            {/* ── Tabla de actividad global ────────────────────────────── */}
+            <div style={{ animation: 'fadeSlideIn 0.5s ease 520ms both' }}>
+                <ActivityTable
+                    datos={datos?.actividadReciente || []}
+                    cargando={cargando}
+                />
+            </div>
         </div>
     );
 };
