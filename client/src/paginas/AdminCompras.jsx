@@ -208,12 +208,12 @@ const CampoDetalle = ({ label, value, highlight }) => (
 
 const FilaCompra = React.memo(({ compra, onDetalle }) => (
     <tr className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors">
-        <td className="pl-5 pr-2 py-4 text-gray-500 text-xs tabular-nums text-center w-16 font-mono">
+        <td className="pl-5 pr-2 py-4 text-gray-400 text-sm tabular-nums text-center w-16 font-mono">
             #{compra.id}
         </td>
         <td className="px-4 py-4">
             <p className="font-medium text-white text-sm leading-snug">{compra.nombre}</p>
-            <p className="text-xs text-gray-600 mt-0.5 truncate max-w-[200px]">{compra.email}</p>
+            <p className="text-sm text-gray-400 mt-0.5 truncate max-w-[200px]">{compra.email}</p>
         </td>
         <td className="px-4 py-4 text-gray-400 text-sm hidden md:table-cell max-w-[220px] truncate">
             {compra.evento}
@@ -229,7 +229,7 @@ const FilaCompra = React.memo(({ compra, onDetalle }) => (
                 <button
                     onClick={() => onDetalle(compra)}
                     title="Ver detalle"
-                    className="p-2 text-gray-600 hover:text-white hover:bg-white/[0.06] transition-colors"
+                    className="p-2 text-gray-400 hover:text-white hover:bg-white/[0.06] transition-colors"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
@@ -334,7 +334,7 @@ const AdminCompras = () => {
 
             {/* ── Encabezado ─────────────────────────────────────── */}
             <div className="mb-9">
-                <p className="text-xs text-gray-600 uppercase tracking-[0.2em] mb-2">
+                <p className="text-xs text-gray-400 uppercase tracking-[0.2em] mb-2">
                     Panel de Administrador
                 </p>
                 <h1 className="font-display text-2xl sm:text-3xl font-bold text-white leading-tight">
@@ -356,11 +356,11 @@ const AdminCompras = () => {
                         <div className="relative">
                             <div className="flex items-center gap-2 mb-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">
+                                <h3 className="text-xs text-gray-500 uppercase tracking-widest font-semibold">
                                     Ingresos Totales
-                                </span>
+                                </h3>
                             </div>
-                            <p className="text-xl font-bold text-white tabular-nums">{formatMoneda(kpis.totalIngresos)}</p>
+                            <p className="text-lg font-semibold text-white tabular-nums">{formatMoneda(kpis.totalIngresos)}</p>
                         </div>
                     </div>
 
@@ -370,11 +370,11 @@ const AdminCompras = () => {
                         <div className="relative">
                             <div className="flex items-center gap-2 mb-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                                <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">
+                                <h3 className="text-xs text-gray-500 uppercase tracking-widest font-semibold">
                                     Tickets Vendidos
-                                </span>
+                                </h3>
                             </div>
-                            <p className="text-xl font-bold text-white tabular-nums">{kpis.ticketsVendidos}</p>
+                            <p className="text-lg font-semibold text-white tabular-nums">{kpis.ticketsVendidos}</p>
                         </div>
                     </div>
 
@@ -384,14 +384,14 @@ const AdminCompras = () => {
                         <div className="relative">
                             <div className="flex items-center gap-2 mb-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                                <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">
+                                <h3 className="text-xs text-gray-500 uppercase tracking-widest font-semibold">
                                     Evento Top (Volumen)
-                                </span>
+                                </h3>
                             </div>
-                            <p className="text-sm font-bold text-white leading-snug truncate" title={kpis.eventoTopVolumen}>
+                            <p className="text-sm font-bold text-white leading-snug truncate">
                                 {kpis.eventoTopVolumen}
                             </p>
-                            <p className="text-xs text-gray-600 mt-0.5 tabular-nums">
+                            <p className="text-xs text-gray-400 mt-0.5 tabular-nums">
                                 {kpis.maxVolumen} ticket{kpis.maxVolumen !== 1 ? 's' : ''}
                             </p>
                         </div>
@@ -403,14 +403,14 @@ const AdminCompras = () => {
                         <div className="relative">
                             <div className="flex items-center gap-2 mb-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                                <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">
+                                <h3 className="text-xs text-gray-500 uppercase tracking-widest font-semibold">
                                     Evento Top (Ingresos)
-                                </span>
+                                </h3>
                             </div>
-                            <p className="text-sm font-bold text-white leading-snug truncate" title={kpis.eventoTopIngreso}>
+                            <p className="text-sm font-bold text-white leading-snug truncate">
                                 {kpis.eventoTopIngreso}
                             </p>
-                            <p className="text-xs text-gray-600 mt-0.5 tabular-nums">
+                            <p className="text-xs text-gray-400 mt-0.5 tabular-nums">
                                 {formatMoneda(kpis.maxIngreso)}
                             </p>
                         </div>
@@ -427,7 +427,7 @@ const AdminCompras = () => {
                         {/* Búsqueda */}
                         <div className="relative flex-1">
                             <svg
-                                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none"
+                                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
                                 fill="none" stroke="currentColor" viewBox="0 0 24 24"
                             >
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
@@ -439,12 +439,13 @@ const AdminCompras = () => {
                                 value={busqueda}
                                 onChange={(e) => setBusqueda(e.target.value)}
                                 placeholder="Buscar por ID, cliente o evento..."
-                                className="w-full pl-9 pr-8 py-2 bg-white/[0.04] text-sm text-white placeholder-gray-600 border border-white/[0.06] focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/25 transition-colors"
+                                aria-label="Buscar compras"
+                                className="w-full pl-9 pr-8 py-2 bg-white/[0.04] text-sm text-white placeholder-gray-500 border border-white/[0.06] focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/25 transition-colors"
                             />
                             {busqueda && (
                                 <button
                                     onClick={() => setBusqueda('')}
-                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400 transition-colors"
+                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-400 transition-colors"
                                 >
                                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -456,7 +457,7 @@ const AdminCompras = () => {
                         {/* Filtro de periodo (fecha) */}
                         <div className="relative sm:w-48">
                             <svg
-                                className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-600 pointer-events-none"
+                                className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
                                 fill="none" stroke="currentColor" viewBox="0 0 24 24"
                             >
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
@@ -466,6 +467,7 @@ const AdminCompras = () => {
                                 id="filter-periodo"
                                 value={periodoSel}
                                 onChange={(e) => setPeriodoSel(e.target.value)}
+                                aria-label="Filtrar por periodo"
                                 className="w-full pl-8 pr-8 py-2 bg-gray-900 text-sm text-white border border-white/[0.06] focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/25 transition-colors appearance-none cursor-pointer"
                             >
                                 <option value="todos" className="bg-gray-800 text-white">
@@ -478,7 +480,7 @@ const AdminCompras = () => {
                                 ))}
                             </select>
                             <svg
-                                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-600 pointer-events-none"
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
                                 fill="none" stroke="currentColor" viewBox="0 0 24 24"
                             >
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -508,12 +510,12 @@ const AdminCompras = () => {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-white/[0.06] bg-white/[0.015]">
-                                    <th className="pl-5 pr-2 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-widest w-16">ID</th>
-                                    <th className="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest">Cliente</th>
-                                    <th className="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest hidden md:table-cell">Evento</th>
-                                    <th className="text-center px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest hidden lg:table-cell">Cant.</th>
-                                    <th className="text-right px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest">Total</th>
-                                    <th className="text-right px-5 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest w-20">Acciones</th>
+                                    <th className="pl-5 pr-2 py-4 text-center text-xs font-semibold text-gray-400 uppercase tracking-widest w-16">ID</th>
+                                    <th className="text-left px-4 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest">Cliente</th>
+                                    <th className="text-left px-4 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest hidden md:table-cell">Evento</th>
+                                    <th className="text-center px-4 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest hidden lg:table-cell">Cant.</th>
+                                    <th className="text-right px-4 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest">Total</th>
+                                    <th className="text-right px-5 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest w-20">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -555,12 +557,12 @@ const AdminCompras = () => {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-white/[0.06] bg-white/[0.015]">
-                                    <th className="pl-5 pr-2 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-widest w-16">ID</th>
-                                    <th className="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest">Cliente</th>
-                                    <th className="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest hidden md:table-cell">Evento</th>
-                                    <th className="text-center px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest hidden lg:table-cell">Cant.</th>
-                                    <th className="text-right px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest">Total</th>
-                                    <th className="text-right px-5 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest w-20">Acciones</th>
+                                    <th className="pl-5 pr-2 py-4 text-center text-xs font-semibold text-gray-400 uppercase tracking-widest w-16">ID</th>
+                                    <th className="text-left px-4 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest">Cliente</th>
+                                    <th className="text-left px-4 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest hidden md:table-cell">Evento</th>
+                                    <th className="text-center px-4 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest hidden lg:table-cell">Cant.</th>
+                                    <th className="text-right px-4 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest">Total</th>
+                                    <th className="text-right px-5 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest w-20">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -572,7 +574,7 @@ const AdminCompras = () => {
 
                         {/* Footer: contador */}
                         <div className="px-5 py-3 border-t border-white/[0.04] flex items-center justify-between">
-                            <p className="text-xs text-gray-700">
+                            <p className="text-xs text-gray-400">
                                 {hayFiltrosActivos
                                     ? `${comprasFiltradas.length} de ${compras.length} compras`
                                     : `${compras.length} ${compras.length === 1 ? 'compra' : 'compras'}`
@@ -581,7 +583,7 @@ const AdminCompras = () => {
                             {hayFiltrosActivos && (
                                 <button
                                     onClick={limpiarFiltros}
-                                    className="text-xs text-gray-600 hover:text-gray-400 transition-colors"
+                                    className="text-xs text-gray-400 hover:text-gray-400 transition-colors"
                                 >
                                     Limpiar filtros
                                 </button>
@@ -613,7 +615,7 @@ const AdminCompras = () => {
                             </div>
                             <button
                                 onClick={cerrarDetalle}
-                                className="p-1.5 text-gray-600 hover:text-white transition-colors"
+                                className="p-1.5 text-gray-400 hover:text-white transition-colors"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -632,9 +634,9 @@ const AdminCompras = () => {
                                 </div>
                                 <div>
                                     <p className="font-semibold text-white">{modalDetalle.nombre}</p>
-                                    <p className="text-xs text-gray-600 mt-0.5">{modalDetalle.email}</p>
+                                    <p className="text-xs text-gray-400 mt-0.5">{modalDetalle.email}</p>
                                 </div>
-                                <span className="ml-auto text-xs text-gray-600 font-mono">#{modalDetalle.id}</span>
+                                <span className="ml-auto text-xs text-gray-400 font-mono">#{modalDetalle.id}</span>
                             </div>
 
                             {/* Campos */}

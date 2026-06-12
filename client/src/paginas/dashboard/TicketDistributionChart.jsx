@@ -62,13 +62,13 @@ const TicketDistributionChart = ({ datos, cargando }) => {
     }));
 
     return (
-        <div className="bg-white/[0.02] border border-white/[0.06] p-5">
+        <div className="bg-white/[0.02] border border-white/[0.06] p-5" role="region" aria-label="Gráfico de distribución de ventas por categoría">
             {/* Cabecera */}
             <div className="flex items-center gap-3 mb-5">
                 <div className="w-0.5 h-5 bg-emerald-500/70 rounded-full" />
                 <div>
-                    <h3 className="text-sm font-bold text-white">Distribución de Ventas</h3>
-                    <p className="text-[10px] text-gray-600 mt-0.5">Por categoría de ticket</p>
+                    <h2 className="text-sm font-bold text-white">Distribución de Ventas</h2>
+                    <p className="text-xs text-gray-400 mt-0.5">Por categoría de ticket</p>
                 </div>
             </div>
 
@@ -76,7 +76,7 @@ const TicketDistributionChart = ({ datos, cargando }) => {
                 {/* Donut */}
                 <div className="w-full sm:w-1/2">
                     <ResponsiveContainer width="100%" height={220}>
-                        <PieChart>
+                        <PieChart tabIndex={-1}>
                             <Pie
                                 data={datosConPorcentaje}
                                 cx="50%"
@@ -99,7 +99,7 @@ const TicketDistributionChart = ({ datos, cargando }) => {
                             <text x="50%" y="46%" textAnchor="middle" fill="#ffffff" fontSize="20" fontWeight="700">
                                 {totalTickets.toLocaleString('es-PE')}
                             </text>
-                            <text x="50%" y="56%" textAnchor="middle" fill="#6b7280" fontSize="10" fontWeight="500">
+                            <text x="50%" y="56%" textAnchor="middle" fill="#6b7280" fontSize="12" fontWeight="500">
                                 tickets totales
                             </text>
                         </PieChart>

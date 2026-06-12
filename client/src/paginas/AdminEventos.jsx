@@ -90,24 +90,24 @@ const CampoDetalle = ({ label, value }) => (
 
 const FilaEvento = React.memo(({ numero, evento, onDetalle, onCambiarEstado }) => (
     <tr className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors">
-        <td className="pl-5 pr-2 py-4 text-gray-600 text-xs tabular-nums text-center w-10">
+        <td className="pl-5 pr-2 py-4 text-gray-400 text-sm tabular-nums text-center w-10">
             {numero}
         </td>
         <td className="px-4 py-4">
-            <p className="font-medium text-white leading-snug max-w-[180px] truncate" title={evento.titulo}>
+            <p className="font-medium text-white leading-snug max-w-[180px] truncate">
                 {evento.titulo}
             </p>
         </td>
-        <td className="px-4 py-4 text-gray-400 text-xs hidden sm:table-cell whitespace-nowrap">
+        <td className="px-4 py-4 text-gray-400 text-sm hidden sm:table-cell whitespace-nowrap">
             {evento.categoria || '—'}
         </td>
-        <td className="px-4 py-4 text-gray-400 text-xs hidden md:table-cell whitespace-nowrap">
+        <td className="px-4 py-4 text-gray-400 text-sm hidden md:table-cell whitespace-nowrap">
             {evento.org_nombre ? `${evento.org_nombre} ${evento.org_apellido}` : '—'}
         </td>
-        <td className="px-4 py-4 text-gray-500 text-xs hidden lg:table-cell whitespace-nowrap">
+        <td className="px-4 py-4 text-gray-400 text-sm hidden lg:table-cell whitespace-nowrap">
             {formatFecha(evento.fecha)}
         </td>
-        <td className="px-4 py-4 text-gray-500 text-xs hidden xl:table-cell whitespace-nowrap">
+        <td className="px-4 py-4 text-gray-400 text-sm hidden xl:table-cell whitespace-nowrap">
             {evento.distrito || '—'}
         </td>
         <td className="px-4 py-4">
@@ -118,7 +118,7 @@ const FilaEvento = React.memo(({ numero, evento, onDetalle, onCambiarEstado }) =
                 <button
                     onClick={() => onDetalle(evento)}
                     title="Ver detalle"
-                    className="p-2 text-gray-600 hover:text-white hover:bg-white/[0.06] transition-colors"
+                    className="p-2 text-gray-400 hover:text-white hover:bg-white/[0.06] transition-colors"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
@@ -131,7 +131,7 @@ const FilaEvento = React.memo(({ numero, evento, onDetalle, onCambiarEstado }) =
                     <button
                         onClick={() => onCambiarEstado(evento)}
                         title="Desactivar evento"
-                        className="p-2 text-gray-600 hover:text-red-400 hover:bg-red-500/[0.06] transition-colors"
+                        className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/[0.06] transition-colors"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
@@ -142,7 +142,7 @@ const FilaEvento = React.memo(({ numero, evento, onDetalle, onCambiarEstado }) =
                     <button
                         onClick={() => onCambiarEstado(evento)}
                         title="Reactivar evento"
-                        className="p-2 text-gray-600 hover:text-emerald-400 hover:bg-emerald-500/[0.06] transition-colors"
+                        className="p-2 text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/[0.06] transition-colors"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
@@ -255,7 +255,7 @@ const AdminEventos = () => {
 
             {/* Encabezado */}
             <div className="mb-9">
-                <p className="text-xs text-gray-600 uppercase tracking-[0.2em] mb-2">
+                <p className="text-xs text-gray-400 uppercase tracking-[0.2em] mb-2">
                     Panel de Administrador
                 </p>
                 <h1 className="font-display text-2xl sm:text-3xl font-bold text-white leading-tight">
@@ -284,7 +284,7 @@ const AdminEventos = () => {
                         {/* Búsqueda */}
                         <div className="relative flex-1">
                             <svg
-                                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none"
+                                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
                                 fill="none" stroke="currentColor" viewBox="0 0 24 24"
                             >
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
@@ -295,12 +295,13 @@ const AdminEventos = () => {
                                 value={busqueda}
                                 onChange={e => setBusqueda(e.target.value)}
                                 placeholder="Buscar por título, distrito, lugar u organizador..."
-                                className="w-full pl-9 pr-8 py-2 bg-white/[0.04] text-sm text-white placeholder-gray-600 border border-white/[0.06] focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/25 transition-colors"
+                                aria-label="Buscar eventos"
+                                className="w-full pl-9 pr-8 py-2 bg-white/[0.04] text-sm text-white placeholder-gray-500 border border-white/[0.06] focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/25 transition-colors"
                             />
                             {busqueda && (
                                 <button
                                     onClick={() => setBusqueda('')}
-                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400 transition-colors"
+                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-400 transition-colors"
                                 >
                                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -314,6 +315,7 @@ const AdminEventos = () => {
                             <select
                                 value={filtroCat}
                                 onChange={e => setFiltroCat(e.target.value)}
+                                aria-label="Filtrar por categoría"
                                 className="w-full pl-3 pr-8 py-2 bg-gray-900 text-sm text-white border border-white/[0.06] focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/25 transition-colors appearance-none cursor-pointer"
                             >
                                 {FILTROS_CAT.map(f => (
@@ -321,7 +323,7 @@ const AdminEventos = () => {
                                 ))}
                             </select>
                             <svg
-                                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-600 pointer-events-none"
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
                                 fill="none" stroke="currentColor" viewBox="0 0 24 24"
                             >
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -333,6 +335,7 @@ const AdminEventos = () => {
                             <select
                                 value={filtroEstado}
                                 onChange={e => setFiltroEstado(e.target.value)}
+                                aria-label="Filtrar por estado"
                                 className="w-full pl-3 pr-8 py-2 bg-gray-900 text-sm text-white border border-white/[0.06] focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/25 transition-colors appearance-none cursor-pointer"
                             >
                                 {FILTROS_ESTADO.map(f => (
@@ -340,7 +343,7 @@ const AdminEventos = () => {
                                 ))}
                             </select>
                             <svg
-                                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-600 pointer-events-none"
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
                                 fill="none" stroke="currentColor" viewBox="0 0 24 24"
                             >
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -389,14 +392,14 @@ const AdminEventos = () => {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-white/[0.06] bg-white/[0.015]">
-                                    <th className="pl-5 pr-2 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-widest w-10">N°</th>
-                                    <th className="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest">Evento</th>
-                                    <th className="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest hidden sm:table-cell">Categoría</th>
-                                    <th className="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest hidden md:table-cell">Organizador</th>
-                                    <th className="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest hidden lg:table-cell">Fecha</th>
-                                    <th className="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest hidden xl:table-cell">Distrito</th>
-                                    <th className="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest">Estado</th>
-                                    <th className="text-right px-5 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest">Acciones</th>
+                                    <th className="pl-5 pr-2 py-4 text-center text-xs font-semibold text-gray-400 uppercase tracking-widest w-10">N°</th>
+                                    <th className="text-left px-4 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest">Evento</th>
+                                    <th className="text-left px-4 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest hidden sm:table-cell">Categoría</th>
+                                    <th className="text-left px-4 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest hidden md:table-cell">Organizador</th>
+                                    <th className="text-left px-4 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest hidden lg:table-cell">Fecha</th>
+                                    <th className="text-left px-4 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest hidden xl:table-cell">Distrito</th>
+                                    <th className="text-left px-4 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest">Estado</th>
+                                    <th className="text-right px-5 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -414,7 +417,7 @@ const AdminEventos = () => {
 
                         {/* Contador de resultados */}
                         <div className="px-5 py-3 border-t border-white/[0.04] flex items-center justify-between">
-                            <p className="text-xs text-gray-700">
+                            <p className="text-xs text-gray-400">
                                 {hayFiltrosActivos
                                     ? `${eventosFiltrados.length} de ${eventos.length} eventos`
                                     : `${eventos.length} ${eventos.length === 1 ? 'evento' : 'eventos'}`
@@ -423,7 +426,7 @@ const AdminEventos = () => {
                             {hayFiltrosActivos && (
                                 <button
                                     onClick={limpiarFiltros}
-                                    className="text-xs text-gray-600 hover:text-gray-400 transition-colors"
+                                    className="text-xs text-gray-400 hover:text-gray-400 transition-colors"
                                 >
                                     Limpiar filtros
                                 </button>
@@ -452,7 +455,7 @@ const AdminEventos = () => {
                             </div>
                             <button
                                 onClick={cerrarDetalle}
-                                className="p-1.5 text-gray-600 hover:text-white transition-colors"
+                                className="p-1.5 text-gray-400 hover:text-white transition-colors"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -543,7 +546,7 @@ const AdminEventos = () => {
                         <p className="text-sm text-gray-400 mb-1 font-medium truncate">
                             "{confirmar.titulo}"
                         </p>
-                        <p className="text-xs text-gray-600 mb-6">
+                        <p className="text-xs text-gray-400 mb-6">
                             {confirmar.activo
                                 ? 'El evento dejará de ser visible en la plataforma.'
                                 : 'El evento volverá a ser visible en la plataforma.'

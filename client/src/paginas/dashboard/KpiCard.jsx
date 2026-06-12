@@ -24,7 +24,7 @@ const IndicadorCrecimiento = ({ valor }) => {
         <span className={`inline-flex items-center gap-1 text-xs font-semibold tabular-nums ${
             positivo ? 'text-emerald-400' : 'text-red-400'
         }`}>
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
                     d={positivo
                         ? 'M5 15l7-7 7 7'
@@ -44,7 +44,7 @@ const BarraProgreso = ({ vendidos, capacidad }) => {
     const porcentaje = Math.min((vendidos / capacidad) * 100, 100);
     return (
         <div className="mt-3">
-            <div className="flex items-center justify-between text-[10px] text-gray-600 mb-1.5">
+            <div className="flex items-center justify-between text-xs text-gray-400 mb-1.5">
                 <span>{vendidos.toLocaleString('es-PE')} vendidos</span>
                 <span>{capacidad.toLocaleString('es-PE')} capacidad</span>
             </div>
@@ -118,7 +118,7 @@ const KpiCard = ({
                             <Icono />
                         </span>
                     </div>
-                    <span className="text-[10px] text-gray-500 uppercase tracking-[0.18em] font-semibold leading-tight">
+                    <span className="text-xs text-gray-400 uppercase tracking-[0.18em] font-semibold leading-tight">
                         {titulo}
                     </span>
                 </div>
@@ -139,12 +139,12 @@ const KpiCard = ({
 
                 {/* Subtexto */}
                 {!cargando && subtexto && (
-                    <p className="text-xs text-gray-600 mt-1">{subtexto}</p>
+                    <p className="text-xs text-gray-400 mt-1">{subtexto}</p>
                 )}
 
                 {/* Valor anterior */}
                 {!cargando && valorAnterior !== undefined && formato === 'currency' && (
-                    <p className="text-xs text-gray-600 mt-1 tabular-nums">
+                    <p className="text-xs text-gray-400 mt-1 tabular-nums">
                         Mes anterior: S/ {Number(valorAnterior).toLocaleString('es-PE', {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,

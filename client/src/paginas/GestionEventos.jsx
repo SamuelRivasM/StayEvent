@@ -11,8 +11,8 @@ const FORM_VACIO = {
 
 const ZONA_VACIA = { nombre: '', precio: '', stock: '' };
 
-const labelCls = 'block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5';
-const inputCls = 'w-full px-4 py-2.5 bg-white/[0.05] text-sm text-white placeholder-gray-600 border border-white/[0.08] focus:outline-none focus:border-purple-500/60 focus:ring-1 focus:ring-purple-500/30 transition-colors';
+const labelCls = 'block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1.5';
+const inputCls = 'w-full px-4 py-2.5 bg-white/[0.05] text-sm text-white placeholder-gray-500 border border-white/[0.08] focus:outline-none focus:border-purple-500/60 focus:ring-1 focus:ring-purple-500/30 transition-colors';
 const selectCls = 'w-full px-4 py-2.5 bg-gray-800/90 text-sm text-white border border-white/[0.08] focus:outline-none focus:border-purple-500/60 focus:ring-1 focus:ring-purple-500/30 transition-colors appearance-none cursor-pointer';
 
 const KEYFRAMES = `
@@ -44,8 +44,9 @@ const fechaHoy = () => {
 
 const Campo = React.memo(({ label, name, type = 'text', value, onChange, placeholder, ...rest }) => (
     <div>
-        <label className={labelCls}>{label}</label>
+        <label htmlFor={name} className={labelCls}>{label}</label>
         <input
+            id={name}
             type={type}
             name={name}
             value={value}
@@ -269,7 +270,7 @@ const GestionEventos = () => {
 
                     <div className="mb-10 flex items-end justify-between gap-4">
                         <div>
-                            <p className="text-xs text-gray-600 uppercase tracking-[0.2em] mb-2">Panel de Organizador</p>
+                            <p className="text-xs text-gray-400 uppercase tracking-[0.2em] mb-2">Panel de Organizador</p>
                             <h1 className="font-display text-2xl sm:text-3xl font-bold text-white leading-tight">
                                 Gestión de Eventos
                             </h1>
@@ -306,7 +307,7 @@ const GestionEventos = () => {
                                     </svg>
                                 </div>
                                 <p className="text-gray-500 text-sm mb-1">Sin eventos aún</p>
-                                <p className="text-gray-700 text-xs mb-6">Crea tu primer evento para comenzar</p>
+                                <p className="text-gray-400 text-xs mb-6">Crea tu primer evento para comenzar</p>
                                 <button
                                     onClick={abrirCrear}
                                     className="px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-sm font-semibold transition-colors"
@@ -319,12 +320,12 @@ const GestionEventos = () => {
                                 <table className="w-full text-sm">
                                     <thead>
                                         <tr className="border-b border-white/[0.06] bg-white/[0.015]">
-                                            <th className="text-left px-5 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest">Evento</th>
-                                            <th className="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest hidden sm:table-cell">Fecha</th>
-                                            <th className="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest hidden md:table-cell">Categoría</th>
-                                            <th className="text-right px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest hidden md:table-cell">Zonas</th>
-                                            <th className="text-center px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest">Estado</th>
-                                            <th className="text-right px-5 py-4 text-xs font-semibold text-gray-600 uppercase tracking-widest">Acciones</th>
+                                            <th className="text-left px-5 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest">Evento</th>
+                                            <th className="text-left px-4 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest hidden sm:table-cell">Fecha</th>
+                                            <th className="text-left px-4 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest hidden md:table-cell">Categoría</th>
+                                            <th className="text-right px-4 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest hidden md:table-cell">Zonas</th>
+                                            <th className="text-center px-4 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest">Estado</th>
+                                            <th className="text-right px-5 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest">Acciones</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -366,9 +367,10 @@ const GestionEventos = () => {
                             </div>
                             <button
                                 onClick={cerrarModal}
-                                className="p-1.5 text-gray-600 hover:text-white transition-colors"
+                                aria-label="Cerrar"
+                                className="p-1.5 text-gray-400 hover:text-white transition-colors"
                             >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
@@ -384,13 +386,13 @@ const GestionEventos = () => {
                             <Campo label="Título *" name="titulo" value={formulario.titulo} onChange={manejarCambio} placeholder="Nombre del evento" required />
 
                             <div>
-                                <label className={labelCls}>Categoría *</label>
+                                <label htmlFor="categoria" className={labelCls}>Categoría *</label>
                                 <div className="relative">
-                                    <select name="categoria" value={formulario.categoria} onChange={manejarCambio} required className={selectCls}>
+                                    <select id="categoria" name="categoria" value={formulario.categoria} onChange={manejarCambio} required className={selectCls}>
                                         <option value="">Seleccionar categoría</option>
                                         {CATEGORIAS.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
-                                    <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                     </svg>
                                 </div>
@@ -407,7 +409,7 @@ const GestionEventos = () => {
                             {/* Zonas del evento */}
                             <div>
                                 <div className="flex items-center justify-between mb-2">
-                                    <label className={labelCls} style={{ marginBottom: 0 }}>Zonas del evento</label>
+                                    <p className={labelCls} style={{ marginBottom: 0 }}>Zonas del evento</p>
                                     <button
                                         type="button"
                                         onClick={agregarZona}
@@ -422,15 +424,15 @@ const GestionEventos = () => {
                                 </div>
 
                                 {zonas.length === 0 ? (
-                                    <p className="text-xs text-gray-600 py-3 border border-dashed border-white/[0.06] text-center">
+                                    <p className="text-xs text-gray-400 py-3 border border-dashed border-white/[0.06] text-center">
                                         Sin zonas definidas
                                     </p>
                                 ) : (
                                     <div className="space-y-2">
                                         <div className="grid grid-cols-[1fr_88px_72px_32px] gap-2 px-1">
-                                            <span className="text-[10px] text-gray-600 uppercase tracking-widest">Nombre</span>
-                                            <span className="text-[10px] text-gray-600 uppercase tracking-widest">Precio S/.</span>
-                                            <span className="text-[10px] text-gray-600 uppercase tracking-widest">Cap.</span>
+                                            <span className="text-xs text-gray-400 uppercase tracking-widest">Nombre</span>
+                                            <span className="text-xs text-gray-400 uppercase tracking-widest">Precio S/.</span>
+                                            <span className="text-xs text-gray-400 uppercase tracking-widest">Cap.</span>
                                             <span />
                                         </div>
                                         {zonas.map((zona, idx) => (
@@ -441,6 +443,7 @@ const GestionEventos = () => {
                                                     onChange={e => actualizarZona(idx, 'nombre', e.target.value)}
                                                     placeholder="Ej: VIP"
                                                     maxLength={50}
+                                                    aria-label={`Nombre zona ${idx + 1}`}
                                                     className={inputCls}
                                                 />
                                                 <input
@@ -451,6 +454,7 @@ const GestionEventos = () => {
                                                     placeholder="0.00"
                                                     min="0.01"
                                                     step="0.01"
+                                                    aria-label={`Precio zona ${idx + 1}`}
                                                     className={inputCls}
                                                 />
                                                 <input
@@ -460,12 +464,13 @@ const GestionEventos = () => {
                                                     onKeyDown={e => e.key === '-' && e.preventDefault()}
                                                     placeholder="1"
                                                     min="1"
+                                                    aria-label={`Capacidad zona ${idx + 1}`}
                                                     className={inputCls}
                                                 />
                                                 <button
                                                     type="button"
                                                     onClick={() => eliminarZona(idx)}
-                                                    className="flex items-center justify-center w-8 h-8 text-gray-600 hover:text-red-400 hover:bg-red-500/[0.06] transition-colors"
+                                                    className="flex items-center justify-center w-8 h-8 text-gray-400 hover:text-red-400 hover:bg-red-500/[0.06] transition-colors"
                                                 >
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
@@ -485,8 +490,9 @@ const GestionEventos = () => {
                             <Campo label="URL de imagen del mapa" name="imagen_mapa" value={formulario.imagen_mapa} onChange={manejarCambio} placeholder="https://..." />
 
                             <div>
-                                <label className={labelCls}>Descripción</label>
+                                <label htmlFor="descripcion" className={labelCls}>Descripción</label>
                                 <textarea
+                                    id="descripcion"
                                     name="descripcion"
                                     value={formulario.descripcion}
                                     onChange={manejarCambio}
@@ -501,7 +507,7 @@ const GestionEventos = () => {
                             <button
                                 type="button"
                                 onClick={cerrarModal}
-                                className="px-5 py-2.5 text-sm text-gray-500 border border-white/[0.10] hover:text-white hover:border-white/25 transition-colors"
+                                className="px-5 py-2.5 text-sm text-gray-400 border border-white/[0.10] hover:text-white hover:border-white/25 transition-colors"
                             >
                                 Cancelar
                             </button>
@@ -542,7 +548,7 @@ const GestionEventos = () => {
                         <div className="flex justify-end gap-3">
                             <button
                                 onClick={cancelarConfirmacion}
-                                className="px-4 py-2 text-sm text-gray-500 border border-white/[0.10] hover:text-white hover:border-white/25 transition-colors"
+                                className="px-4 py-2 text-sm text-gray-400 border border-white/[0.10] hover:text-white hover:border-white/25 transition-colors"
                             >
                                 Cancelar
                             </button>
@@ -578,18 +584,18 @@ const FilaEvento = React.memo(({ evento, onEditar, onCambioEstado, onEliminar })
     <tr className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors">
         <td className="px-5 py-4">
             <p className="font-medium text-white leading-snug">{evento.titulo}</p>
-            <p className="text-gray-600 text-xs mt-0.5">{evento.lugar}</p>
+            <p className="text-gray-400 text-sm mt-0.5">{evento.lugar}</p>
         </td>
-        <td className="px-4 py-4 text-gray-500 text-xs hidden sm:table-cell whitespace-nowrap">
+        <td className="px-4 py-4 text-gray-400 text-sm hidden sm:table-cell whitespace-nowrap">
             {new Date(evento.fecha).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' })}
         </td>
         <td className="px-4 py-4 hidden md:table-cell">
-            <span className="text-xs text-gray-600 border border-white/[0.08] px-2 py-0.5">{evento.categoria}</span>
+            <span className="text-sm text-gray-400 border border-white/[0.08] px-2 py-0.5">{evento.categoria}</span>
         </td>
         <td className="px-4 py-4 text-right text-xs hidden md:table-cell">
             {evento.zonas && evento.zonas.length > 0
                 ? <span className="text-purple-400/80">{evento.zonas.length} zona{evento.zonas.length !== 1 ? 's' : ''}</span>
-                : <span className="text-gray-700">—</span>
+                : <span className="text-gray-400">—</span>
             }
         </td>
         <td className="px-4 py-4 text-center">
@@ -597,7 +603,7 @@ const FilaEvento = React.memo(({ evento, onEditar, onCambioEstado, onEliminar })
                 onClick={() => onCambioEstado(evento)}
                 className={`text-xs px-3 py-1 font-medium transition-colors border ${evento.activo
                     ? 'bg-emerald-500/[0.08] text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/15'
-                    : 'bg-transparent text-gray-600 border-white/[0.08] hover:bg-white/[0.04]'
+                    : 'bg-transparent text-gray-400 border-white/[0.08] hover:bg-white/[0.04]'
                     }`}
             >
                 {evento.activo ? 'Activo' : 'Inactivo'}
@@ -608,7 +614,7 @@ const FilaEvento = React.memo(({ evento, onEditar, onCambioEstado, onEliminar })
                 <button
                     onClick={() => onEditar(evento)}
                     title="Editar"
-                    className="p-2 text-gray-600 hover:text-white hover:bg-white/[0.06] transition-colors"
+                    className="p-2 text-gray-400 hover:text-white hover:bg-white/[0.06] transition-colors"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -617,7 +623,7 @@ const FilaEvento = React.memo(({ evento, onEditar, onCambioEstado, onEliminar })
                 <button
                     onClick={() => onEliminar(evento)}
                     title="Eliminar"
-                    className="p-2 text-gray-600 hover:text-red-400 hover:bg-red-500/[0.06] transition-colors"
+                    className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/[0.06] transition-colors"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

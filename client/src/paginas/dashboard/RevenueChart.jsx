@@ -62,7 +62,7 @@ const LeyendaCustom = ({ payload }) => (
                     className="w-2.5 h-2.5 rounded-full"
                     style={{ backgroundColor: entry.color }}
                 />
-                <span className="text-[11px] text-gray-500 font-medium">{entry.value}</span>
+                <span className="text-xs text-gray-400 font-medium">{entry.value}</span>
             </div>
         ))}
     </div>
@@ -84,19 +84,19 @@ const RevenueChart = ({ datos, cargando }) => {
     };
 
     return (
-        <div className="bg-white/[0.02] border border-white/[0.06] p-5">
+        <div className="bg-white/[0.02] border border-white/[0.06] p-5" role="region" aria-label="Gráfico de tendencia de ingresos">
             {/* Cabecera */}
             <div className="flex items-center gap-3 mb-5">
                 <div className="w-0.5 h-5 bg-purple-500/70 rounded-full" />
                 <div>
-                    <h3 className="text-sm font-bold text-white">Tendencia de Ingresos</h3>
-                    <p className="text-[10px] text-gray-600 mt-0.5">Últimos 30 días</p>
+                    <h2 className="text-sm font-bold text-white">Tendencia de Ingresos</h2>
+                    <p className="text-xs text-gray-400 mt-0.5">Últimos 30 días</p>
                 </div>
             </div>
 
             {/* Gráfico */}
             <ResponsiveContainer width="100%" height={280}>
-                <AreaChart data={datos} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                <AreaChart data={datos} margin={{ top: 5, right: 10, left: 0, bottom: 5 }} tabIndex={-1}>
                     <defs>
                         <linearGradient id="gradIngresos" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%"  stopColor="#8b5cf6" stopOpacity={0.3} />
@@ -117,7 +117,7 @@ const RevenueChart = ({ datos, cargando }) => {
                     <XAxis
                         dataKey="dia"
                         tickFormatter={formatXAxis}
-                        tick={{ fill: '#6b7280', fontSize: 10 }}
+                        tick={{ fill: '#6b7280', fontSize: 12 }}
                         axisLine={{ stroke: 'rgba(255,255,255,0.06)' }}
                         tickLine={false}
                         interval="preserveStartEnd"
@@ -126,7 +126,7 @@ const RevenueChart = ({ datos, cargando }) => {
 
                     <YAxis
                         yAxisId="ingresos"
-                        tick={{ fill: '#6b7280', fontSize: 10 }}
+                        tick={{ fill: '#6b7280', fontSize: 12 }}
                         axisLine={false}
                         tickLine={false}
                         tickFormatter={(v) => `S/${(v / 1000).toFixed(0)}k`}
@@ -136,7 +136,7 @@ const RevenueChart = ({ datos, cargando }) => {
                     <YAxis
                         yAxisId="tickets"
                         orientation="right"
-                        tick={{ fill: '#6b7280', fontSize: 10 }}
+                        tick={{ fill: '#6b7280', fontSize: 12 }}
                         axisLine={false}
                         tickLine={false}
                         width={40}

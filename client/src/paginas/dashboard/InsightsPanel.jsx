@@ -9,21 +9,21 @@ import React from 'react';
 // ─── Iconos por tipo de alerta ────────────────────────────────────────────────
 
 const IconWarning = () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
             d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
     </svg>
 );
 
 const IconInfo = () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
             d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
 );
 
 const IconSuccess = () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
@@ -77,7 +77,7 @@ const AlertaItem = ({ alerta, index }) => {
                 <p className="text-xs text-gray-300 leading-relaxed">
                     {alerta.mensaje}
                 </p>
-                <p className="text-[10px] text-gray-600 mt-1.5 font-medium">
+                <p className="text-xs text-gray-400 mt-1.5 font-medium">
                     {alerta.tiempo}
                 </p>
             </div>
@@ -105,11 +105,11 @@ const InsightsPanel = ({ alertas, cargando }) => {
                 <div className="flex items-center gap-3">
                     <div className="w-0.5 h-5 bg-blue-500/70 rounded-full" />
                     <div className="flex-1">
-                        <h3 className="text-sm font-bold text-white">Insights & Alertas</h3>
-                        <p className="text-[10px] text-gray-600 mt-0.5">Notificaciones del sistema</p>
+                        <h2 className="text-sm font-bold text-white">Insights & Alertas</h2>
+                        <p className="text-xs text-gray-400 mt-0.5">Notificaciones del sistema</p>
                     </div>
                     {/* Badge de cantidad */}
-                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-purple-500/15 text-[10px] text-purple-400 font-bold">
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-purple-500/15 text-xs text-purple-400 font-bold">
                         {alertas.length}
                     </span>
                 </div>
@@ -119,7 +119,7 @@ const InsightsPanel = ({ alertas, cargando }) => {
             <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-2 max-h-[380px]">
                 {alertas.length === 0 ? (
                     <div className="text-center py-8">
-                        <p className="text-xs text-gray-600">Sin alertas pendientes</p>
+                        <p className="text-xs text-gray-400">Sin alertas pendientes</p>
                     </div>
                 ) : (
                     alertas.map((alerta, index) => (

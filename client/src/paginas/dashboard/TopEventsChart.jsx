@@ -32,15 +32,15 @@ const TooltipCustom = ({ active, payload }) => {
             </p>
             <div className="flex items-center gap-2 mb-1">
                 <span className="w-2 h-2 rounded-full bg-purple-400 shrink-0" />
-                <span className="text-[11px] text-gray-400">Recaudación:</span>
-                <span className="text-[11px] text-white font-semibold tabular-nums">
+                <span className="text-xs text-gray-400">Recaudación:</span>
+                <span className="text-xs text-white font-semibold tabular-nums">
                     S/ {Number(datos.recaudacion).toLocaleString('es-PE', { minimumFractionDigits: 2 })}
                 </span>
             </div>
             <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-                <span className="text-[11px] text-gray-400">Asistencia:</span>
-                <span className="text-[11px] text-white font-semibold tabular-nums">
+                <span className="text-xs text-gray-400">Asistencia:</span>
+                <span className="text-xs text-white font-semibold tabular-nums">
                     {datos.asistencia.toLocaleString('es-PE')} tickets
                 </span>
             </div>
@@ -64,13 +64,13 @@ const TopEventsChart = ({ datos, cargando }) => {
     };
 
     return (
-        <div className="bg-white/[0.02] border border-white/[0.06] p-5">
+        <div className="bg-white/[0.02] border border-white/[0.06] p-5" role="region" aria-label="Gráfico de top 5 eventos por recaudación">
             {/* Cabecera */}
             <div className="flex items-center gap-3 mb-5">
                 <div className="w-0.5 h-5 bg-amber-500/70 rounded-full" />
                 <div>
-                    <h3 className="text-sm font-bold text-white">Top Eventos</h3>
-                    <p className="text-[10px] text-gray-600 mt-0.5">Mayor recaudación</p>
+                    <h2 className="text-sm font-bold text-white">Top Eventos</h2>
+                    <p className="text-xs text-gray-400 mt-0.5">Mayor recaudación</p>
                 </div>
             </div>
 
@@ -80,6 +80,7 @@ const TopEventsChart = ({ datos, cargando }) => {
                     data={datos}
                     layout="vertical"
                     margin={{ top: 5, right: 30, left: 5, bottom: 5 }}
+                    tabIndex={-1}
                 >
                     <CartesianGrid
                         strokeDasharray="3 3"
@@ -89,7 +90,7 @@ const TopEventsChart = ({ datos, cargando }) => {
 
                     <XAxis
                         type="number"
-                        tick={{ fill: '#6b7280', fontSize: 10 }}
+                        tick={{ fill: '#6b7280', fontSize: 12 }}
                         axisLine={{ stroke: 'rgba(255,255,255,0.06)' }}
                         tickLine={false}
                         tickFormatter={(v) => `S/${(v / 1000).toFixed(0)}k`}
@@ -98,7 +99,7 @@ const TopEventsChart = ({ datos, cargando }) => {
                     <YAxis
                         type="category"
                         dataKey="titulo"
-                        tick={{ fill: '#9ca3af', fontSize: 11 }}
+                        tick={{ fill: '#9ca3af', fontSize: 12 }}
                         axisLine={false}
                         tickLine={false}
                         width={130}

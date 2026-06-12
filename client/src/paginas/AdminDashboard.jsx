@@ -37,28 +37,28 @@ const KEYFRAMES = `
 // ─── Iconos para las KPI cards ────────────────────────────────────────────────
 
 const IconIngresos = () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
             d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
 );
 
 const IconTickets = () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
             d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
     </svg>
 );
 
 const IconEventos = () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
     </svg>
 );
 
 const IconUsuarios = () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
             d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
@@ -116,14 +116,14 @@ const AdminDashboard = () => {
     const kpis = datos?.kpis;
 
     return (
-        <div className="px-5 py-8 sm:px-8">
+        <div className="px-4 py-8 sm:px-6 lg:px-8">
             <style>{KEYFRAMES}</style>
 
             {/* ── Cabecera ────────────────────────────────────────────── */}
             <div className="mb-8" style={{ animation: 'fadeSlideIn 0.4s ease both' }}>
                 <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
                     <div>
-                        <p className="text-xs text-gray-600 uppercase tracking-[0.2em] mb-2">
+                        <p className="font-display text-2xl sm:text-3xl font-bold text-white leading-tight">
                             Panel de Administrador
                         </p>
                         <h1 className="font-display text-2xl sm:text-3xl font-bold text-white leading-tight">
@@ -135,12 +135,12 @@ const AdminDashboard = () => {
                     {/* Fecha actual + indicador de modo */}
                     <div className="flex items-center gap-3">
                         {usandoMock && (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider bg-amber-500/10 text-amber-400 rounded-sm">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider bg-amber-500/10 text-amber-400 rounded-sm">
                                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400" style={{ animation: 'pulseGlow 2s ease infinite' }} />
                                 Datos de prueba
                             </span>
                         )}
-                        <p className="text-xs text-gray-600 capitalize hidden sm:block">
+                        <p className="text-xs text-gray-400 capitalize hidden sm:block">
                             {obtenerFechaFormateada()}
                         </p>
                     </div>
@@ -153,6 +153,7 @@ const AdminDashboard = () => {
                     <span>{error}</span>
                     <button
                         onClick={() => setError('')}
+                        aria-label="Cerrar"
                         className="text-red-400/50 hover:text-red-400 shrink-0 transition-colors"
                     >
                         ✕
@@ -161,7 +162,7 @@ const AdminDashboard = () => {
             )}
 
             {/* ── KPI Cards ───────────────────────────────────────────── */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
                 <KpiCard
                     titulo="Ingresos Totales"
                     valor={kpis?.ingresos.actual}
@@ -208,9 +209,9 @@ const AdminDashboard = () => {
             </div>
 
             {/* ── Gráfico de tendencia + Panel de Insights ────────────── */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
                 <div
-                    className="lg:col-span-2"
+                    className="lg:col-span-2 min-w-0 overflow-hidden"
                     style={{ animation: 'fadeSlideIn 0.5s ease 200ms both' }}
                 >
                     <RevenueChart
@@ -218,7 +219,7 @@ const AdminDashboard = () => {
                         cargando={cargando}
                     />
                 </div>
-                <div style={{ animation: 'fadeSlideIn 0.5s ease 280ms both' }}>
+                <div className="min-w-0" style={{ animation: 'fadeSlideIn 0.5s ease 280ms both' }}>
                     <InsightsPanel
                         alertas={MOCK_ALERTAS}
                         cargando={cargando}
@@ -227,14 +228,14 @@ const AdminDashboard = () => {
             </div>
 
             {/* ── Gráfico de barras + Gráfico donut ───────────────────── */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-                <div style={{ animation: 'fadeSlideIn 0.5s ease 360ms both' }}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-6">
+                <div className="min-w-0 overflow-hidden" style={{ animation: 'fadeSlideIn 0.5s ease 360ms both' }}>
                     <TopEventsChart
                         datos={datos?.topEventos || []}
                         cargando={cargando}
                     />
                 </div>
-                <div style={{ animation: 'fadeSlideIn 0.5s ease 440ms both' }}>
+                <div className="min-w-0 overflow-hidden" style={{ animation: 'fadeSlideIn 0.5s ease 440ms both' }}>
                     <TicketDistributionChart
                         datos={datos?.distribucion || []}
                         cargando={cargando}

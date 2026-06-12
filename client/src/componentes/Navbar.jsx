@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Navbar = () => {
     const { usuario, cerrarSesion } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+    const enAdmin = location.pathname.startsWith('/admin');
     const [menuAbierto, setMenuAbierto] = useState(false);
     const [navVisible, setNavVisible] = useState(true);
     const [scrolled, setScrolled] = useState(false);
@@ -45,7 +47,7 @@ const Navbar = () => {
                 fixed top-0 left-0 right-0 z-50
                 transition-all duration-300 ease-in-out
                 ${navVisible ? 'translate-y-0' : '-translate-y-full'}
-                ${scrolled
+                ${scrolled || menuAbierto
                     ? 'bg-gray-950/98 backdrop-blur-md border-b border-white/8 shadow-xl shadow-black/40'
                     : 'bg-transparent border-b border-transparent'
                 }
@@ -67,12 +69,18 @@ const Navbar = () => {
                         {usuario ? (
                             <>
                                 {usuario.rol === 'admin' && (
-                                    <Link
-                                        to="/admin/dashboard"
-                                        className="px-4 py-1.5 text-sm font-medium text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400/50 transition-all duration-200"
-                                    >
-                                        Panel Admin
-                                    </Link>
+                                    enAdmin ? (
+                                        <span className="px-4 py-1.5 text-sm font-medium text-purple-400 border border-purple-500/30 cursor-default">
+                                            Panel Admin
+                                        </span>
+                                    ) : (
+                                        <Link
+                                            to="/admin/dashboard"
+                                            className="px-4 py-1.5 text-sm font-medium text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400/50 transition-all duration-200"
+                                        >
+                                            Panel Admin
+                                        </Link>
+                                    )
                                 )}
                                 {usuario.rol === 'organizador' && (
                                     <Link
@@ -181,6 +189,7 @@ const Navbar = () => {
                                     <Link
                                         to="/admin/dashboard"
                                         onClick={() => setMenuAbierto(false)}
+                                        aria-label="Panel de administración"
                                         className="block px-3 py-2 text-sm text-purple-400 hover:text-purple-300 hover:bg-white/5 transition-all"
                                     >
                                         Panel Admin
@@ -195,7 +204,6 @@ const Navbar = () => {
                                         Gestión Eventos
                                     </Link>
                                 )}
-=======
                                 {usuario.rol === 'usuario' && (
                                     <Link
                                         to="/mis-tickets"
@@ -213,31 +221,31 @@ const Navbar = () => {
                                     Configurar perfil
                                 </Link>
 
-    <button
-        onClick={handleCerrarSesion}
-        className="w-full text-left px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-all"
-    >
-        Cerrar sesión
-    </button>
+                                <button
+                                    onClick={handleCerrarSesion}
+                                    className="w-full text-left px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+                                >
+                                    Cerrar sesión
+                                </button>
                             </>
                         ) : (
-    <>
-        <Link
-            to="/registro"
-            onClick={() => setMenuAbierto(false)}
-            className="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-all"
-        >
-            Registrarse
-        </Link>
-        <Link
-            to="/login"
-            onClick={() => setMenuAbierto(false)}
-            className="block px-3 py-2 text-sm font-semibold text-white bg-purple-600 text-center"
-        >
-            Iniciar sesión
-        </Link>
-    </>
-)}
+                            <>
+                                <Link
+                                    to="/registro"
+                                    onClick={() => setMenuAbierto(false)}
+                                    className="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+                                >
+                                    Registrarse
+                                </Link>
+                                <Link
+                                    to="/login"
+                                    onClick={() => setMenuAbierto(false)}
+                                    className="block px-3 py-2 text-sm font-semibold text-white bg-purple-600 text-center"
+                                >
+                                    Iniciar sesión
+                                </Link>
+                            </>
+                        )}
                     </div >
                 )}
             </div >

@@ -35,12 +35,12 @@ const formatMoneda = (monto) =>
 const BadgeTipo = ({ tipo }) => {
     const esCompra = tipo === 'Compra de Ticket';
     return (
-        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-sm ${
+        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider rounded-sm ${
             esCompra
                 ? 'bg-purple-500/10 text-purple-400'
                 : 'bg-blue-500/10 text-blue-400'
         }`}>
-            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                     d={esCompra
                         ? 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z'
@@ -65,7 +65,7 @@ const BadgeEstado = ({ estado }) => {
     const config = configs[estado] || configs.pendiente;
 
     return (
-        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-sm ${config.bg} ${config.text}`}>
+        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider rounded-sm ${config.bg} ${config.text}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
             {config.label}
         </span>
@@ -102,7 +102,7 @@ const FilaActividad = React.memo(({ item }) => (
             {item.monto > 0 ? (
                 <span className="text-sm font-semibold text-white">{formatMoneda(item.monto)}</span>
             ) : (
-                <span className="text-xs text-gray-600">—</span>
+                <span className="text-xs text-gray-400">—</span>
             )}
         </td>
     </tr>
@@ -146,8 +146,8 @@ const ActivityTable = ({ datos, cargando }) => {
                 <div className="flex items-center gap-3">
                     <div className="w-0.5 h-5 bg-indigo-500/70 rounded-full" />
                     <div className="flex-1">
-                        <h3 className="text-sm font-bold text-white">Actividad Global Reciente</h3>
-                        <p className="text-[10px] text-gray-600 mt-0.5">Últimas transacciones de la plataforma</p>
+                        <h2 className="text-sm font-bold text-white">Actividad Global Reciente</h2>
+                        <p className="text-xs text-gray-400 mt-0.5">Últimas transacciones de la plataforma</p>
                     </div>
                 </div>
             </div>
@@ -156,28 +156,28 @@ const ActivityTable = ({ datos, cargando }) => {
             {datos && datos.length > 0 ? (
                 <>
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                        <table className="w-full text-sm" aria-label="Actividad global reciente">
                             <thead>
                                 <tr className="border-b border-white/[0.06] bg-white/[0.015]">
-                                    <th className="pl-5 pr-2 py-3.5 text-center text-[10px] font-semibold text-gray-600 uppercase tracking-widest w-16">
+                                    <th className="pl-5 pr-2 py-3.5 text-center text-xs font-semibold text-gray-400 uppercase tracking-widest w-16">
                                         ID
                                     </th>
-                                    <th className="text-left px-3 py-3.5 text-[10px] font-semibold text-gray-600 uppercase tracking-widest">
+                                    <th className="text-left px-3 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-widest">
                                         Tipo
                                     </th>
-                                    <th className="text-left px-3 py-3.5 text-[10px] font-semibold text-gray-600 uppercase tracking-widest">
+                                    <th className="text-left px-3 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-widest">
                                         Usuario
                                     </th>
-                                    <th className="text-left px-3 py-3.5 text-[10px] font-semibold text-gray-600 uppercase tracking-widest hidden md:table-cell">
+                                    <th className="text-left px-3 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-widest hidden md:table-cell">
                                         Evento
                                     </th>
-                                    <th className="text-left px-3 py-3.5 text-[10px] font-semibold text-gray-600 uppercase tracking-widest hidden lg:table-cell">
+                                    <th className="text-left px-3 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-widest hidden lg:table-cell">
                                         Fecha
                                     </th>
-                                    <th className="text-left px-3 py-3.5 text-[10px] font-semibold text-gray-600 uppercase tracking-widest">
+                                    <th className="text-left px-3 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-widest">
                                         Estado
                                     </th>
-                                    <th className="text-right px-5 py-3.5 text-[10px] font-semibold text-gray-600 uppercase tracking-widest">
+                                    <th className="text-right px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-widest">
                                         Monto
                                     </th>
                                 </tr>
@@ -193,7 +193,7 @@ const ActivityTable = ({ datos, cargando }) => {
                     {/* Paginación */}
                     {totalPaginas > 1 && (
                         <div className="px-5 py-3 border-t border-white/[0.04] flex items-center justify-between">
-                            <p className="text-xs text-gray-700">
+                            <p className="text-xs text-gray-400">
                                 Página {paginaActual} de {totalPaginas}
                                 <span className="hidden sm:inline"> · {datos.length} registros</span>
                             </p>
@@ -201,9 +201,10 @@ const ActivityTable = ({ datos, cargando }) => {
                                 <button
                                     onClick={() => irPagina(paginaActual - 1)}
                                     disabled={paginaActual === 1}
-                                    className="p-1.5 text-gray-600 hover:text-white hover:bg-white/[0.06] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                    aria-label="Página anterior"
+                                    className="p-1.5 text-gray-400 hover:text-white hover:bg-white/[0.06] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                                 >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                     </svg>
                                 </button>
@@ -215,7 +216,7 @@ const ActivityTable = ({ datos, cargando }) => {
                                         className={`w-7 h-7 text-xs font-medium transition-colors ${
                                             paginaActual === i + 1
                                                 ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-                                                : 'text-gray-600 hover:text-white hover:bg-white/[0.06]'
+                                                : 'text-gray-400 hover:text-white hover:bg-white/[0.06]'
                                         }`}
                                     >
                                         {i + 1}
@@ -225,9 +226,10 @@ const ActivityTable = ({ datos, cargando }) => {
                                 <button
                                     onClick={() => irPagina(paginaActual + 1)}
                                     disabled={paginaActual === totalPaginas}
-                                    className="p-1.5 text-gray-600 hover:text-white hover:bg-white/[0.06] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                    aria-label="Página siguiente"
+                                    className="p-1.5 text-gray-400 hover:text-white hover:bg-white/[0.06] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                                 >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                     </svg>
                                 </button>
@@ -237,7 +239,7 @@ const ActivityTable = ({ datos, cargando }) => {
                 </>
             ) : (
                 <div className="text-center py-16">
-                    <svg className="w-8 h-8 text-gray-700 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-8 h-8 text-gray-700 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                             d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
