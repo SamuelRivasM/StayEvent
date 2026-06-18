@@ -17,13 +17,15 @@ const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
 const { testConnection, pool } = require('./config/db');
 const { logError, logInfo, logWarn, generarIdError } = require('./config/logger');
-const { MIN_JWT_SECRET_LENGTH } = require('./config/constantes');
+const { MIN_JWT_SECRET_LENGTH, LIMPIEZA_RESERVAS_MS } = require('./config/constantes');
 const { validacionMiddleware } = require('./middlewares/validacionMiddleware');
 const authRutas = require('./rutas/authRutas');
 const eventosRutas = require('./rutas/eventosRutas');
 const comprasRutas = require('./rutas/comprasRutas');
 const usuariosRutas = require('./rutas/usuariosRutas');
 const adminRutas = require('./rutas/adminRutas');
+const reservasRutas = require('./rutas/reservasRutas');
+const checkinRutas = require('./rutas/checkinRutas');
 
 // Valida que el JWT_SECRET configurado sea seguro y robusto
 
@@ -101,6 +103,8 @@ app.use('/api/eventos', eventosRutas);
 app.use('/api/compras', comprasRutas);
 app.use('/api/usuarios', usuariosRutas);
 app.use('/api/admin', adminRutas);
+app.use('/api/reservas', reservasRutas);
+app.use('/api/checkin', checkinRutas);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -184,6 +188,45 @@ const inicializarDB = async () => {
 
         logInfo('DB', 'Tabla sesiones_activas lista.');
 
+        // Crear tabla de reservas temporales (Ticket Holding)
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS reservas_temporales (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario_id INT NOT NULL,
+                evento_id INT NOT NULL,
+                zona_id INT NOT NULL,
+                cantidad INT NOT NULL,
+                subtotal DECIMAL(10,2) NOT NULL,
+                expira_en DATETIME NOT NULL,
+                creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_expira (expira_en),
+                INDEX idx_usuario (usuario_id),
+                INDEX idx_zona (zona_id),
+                FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+                FOREIGN KEY (evento_id) REFERENCES eventos(id) ON DELETE CASCADE,
+                FOREIGN KEY (zona_id) REFERENCES zonas_evento(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `);
+        logInfo('DB', 'Tabla reservas_temporales lista.');
+
+        // Crear tabla de check-ins
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS checkins (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                compra_id INT NOT NULL,
+                evento_id INT NOT NULL,
+                validado_por INT NOT NULL,
+                cantidad_personas INT NOT NULL DEFAULT 1,
+                fecha_checkin TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY uk_compra (compra_id),
+                INDEX idx_evento (evento_id),
+                FOREIGN KEY (compra_id) REFERENCES compras(id) ON DELETE CASCADE,
+                FOREIGN KEY (evento_id) REFERENCES eventos(id) ON DELETE CASCADE,
+                FOREIGN KEY (validado_por) REFERENCES usuarios(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `);
+        logInfo('DB', 'Tabla checkins lista.');
+
         // Agregar columnas faltantes a eventos (usando whitelist)
         for (const columna of Object.keys(COLUMNAS_PERMITIDAS_EVENTOS)) {
             await agregarColumnaEventosSiNoExiste(columna);
@@ -218,6 +261,44 @@ const verificarPasswordAdmin = async () => {
     }
 };
 
+// ── Job: Limpieza automática de reservas expiradas ────────────────────────────
+
+const limpiarReservasExpiradas = async () => {
+    let conn;
+    try {
+        conn = await pool.getConnection();
+        await conn.beginTransaction();
+
+        // Buscar reservas expiradas
+        const [expiradas] = await conn.execute(
+            'SELECT id, zona_id, cantidad FROM reservas_temporales WHERE expira_en < NOW()'
+        );
+
+        if (expiradas.length > 0) {
+            // Restaurar stock de cada reserva expirada
+            for (const reserva of expiradas) {
+                await conn.execute(
+                    'UPDATE zonas_evento SET stock = stock + ? WHERE id = ?',
+                    [reserva.cantidad, reserva.zona_id]
+                );
+            }
+
+            // Eliminar todas las reservas expiradas
+            await conn.execute('DELETE FROM reservas_temporales WHERE expira_en < NOW()');
+
+            await conn.commit();
+            logInfo('Reservas', `${expiradas.length} reserva(s) expirada(s) liberada(s).`);
+        } else {
+            await conn.commit();
+        }
+    } catch (error) {
+        if (conn) await conn.rollback();
+        logError('Reservas.limpiarExpiradas', error);
+    } finally {
+        if (conn) conn.release();
+    }
+};
+
 // ── Iniciar servidor ──────────────────────────────────────────────────────────
 
 app.listen(PORT, async () => {
@@ -225,4 +306,8 @@ app.listen(PORT, async () => {
     await testConnection();
     await inicializarDB();
     await verificarPasswordAdmin();
+
+    // Iniciar job de limpieza de reservas expiradas
+    setInterval(limpiarReservasExpiradas, LIMPIEZA_RESERVAS_MS);
+    logInfo('Reservas', `Job de limpieza activo (cada ${LIMPIEZA_RESERVAS_MS / 1000}s).`);
 });

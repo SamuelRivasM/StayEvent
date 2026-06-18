@@ -62,6 +62,12 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
     const [errorCompra, setErrorCompra] = useState('');
     const [codigoIngreso, setCodigoIngreso] = useState('');
 
+    // ── Estado de reserva temporal (Ticket Holding) ──
+    const [reservaId, setReservaId] = useState(null);
+    const [tiempoRestante, setTiempoRestante] = useState(0);
+    const [reservaExpirada, setReservaExpirada] = useState(false);
+    const [creandoReserva, setCreandoReserva] = useState(false);
+
     const { usuario } = useAuth();
     const navigate = useNavigate();
 
@@ -70,10 +76,21 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
         return () => clearTimeout(t);
     }, []);
 
+    // Cancelar reserva activa al cerrar el modal
+    const cancelarReservaActiva = useCallback(async (idReserva) => {
+        if (!idReserva) return;
+        try {
+            await api.delete(`/reservas/${idReserva}`);
+        } catch { /* silencioso */ }
+    }, []);
+
     const cerrar = useCallback(() => {
+        if (reservaId && !confirmado) {
+            cancelarReservaActiva(reservaId);
+        }
         setVisible(false);
         setTimeout(onCerrar, DURACION_MS);
-    }, [onCerrar]);
+    }, [onCerrar, reservaId, confirmado, cancelarReservaActiva]);
 
     useEffect(() => {
         const onKey = (e) => { if (e.key === 'Escape') cerrar(); };
@@ -134,7 +151,35 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
         [zonaSeleccionada, cantidad]
     );
 
-    const handleSiguiente = useCallback(() => {
+    // ── Countdown timer de la reserva ──
+    useEffect(() => {
+        if (!reservaId || confirmado || reservaExpirada) return;
+        if (tiempoRestante <= 0) {
+            setReservaExpirada(true);
+            setErrorCompra('Tu reserva ha expirado. Intenta nuevamente.');
+            cancelarReservaActiva(reservaId);
+            setReservaId(null);
+            return;
+        }
+        const timer = setInterval(() => {
+            setTiempoRestante(prev => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [reservaId, tiempoRestante, confirmado, reservaExpirada, cancelarReservaActiva]);
+
+    const formatearTiempo = (segs) => {
+        const m = Math.floor(segs / 60);
+        const s = segs % 60;
+        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    };
+
+    const handleSiguiente = useCallback(async () => {
         if (!zonaSeleccionada) {
             setErrorValidacion('Selecciona una zona para continuar.');
             return;
@@ -152,13 +197,46 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
             return;
         }
 
-        setPaso(2);
+        // Crear reserva temporal
+        setCreandoReserva(true);
+        setErrorCompra('');
+        try {
+            const resp = await api.post('/reservas', {
+                evento_id: eventoId,
+                zona_id: zonaSeleccionada.id,
+                cantidad,
+            });
+            const { reserva } = resp.data;
+            setReservaId(reserva.id);
+            setReservaExpirada(false);
+
+            // Calcular segundos restantes
+            const expiraEn = new Date(reserva.expira_en).getTime();
+            const ahora = Date.now();
+            const segsRestantes = Math.max(0, Math.floor((expiraEn - ahora) / 1000));
+            setTiempoRestante(segsRestantes);
+
+            setPaso(2);
+        } catch (err) {
+            const msg = err.response?.data?.mensaje || 'Error al reservar. Intenta nuevamente.';
+            setErrorValidacion(msg);
+        } finally {
+            setCreandoReserva(false);
+        }
     }, [zonaSeleccionada, usuario, eventoId, cantidad, navigate]);
 
     const volverAPaso1 = useCallback(() => {
+        // Cancelar reserva al volver
+        if (reservaId) {
+            cancelarReservaActiva(reservaId);
+            setReservaId(null);
+            setTiempoRestante(0);
+        }
         setPaso(1);
         setErroresPago({});
-    }, []);
+        setErrorCompra('');
+        setReservaExpirada(false);
+    }, [reservaId, cancelarReservaActiva]);
 
     const handlePagoChange = useCallback((e) => {
         const { name, value } = e.target;
@@ -195,6 +273,12 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
 
     const handleConfirmar = useCallback(async (e) => {
         e.preventDefault();
+
+        if (reservaExpirada || !reservaId) {
+            setErrorCompra('Tu reserva ha expirado. Vuelve a seleccionar tus entradas.');
+            return;
+        }
+
         const errors = validarFormularioPago();
         if (Object.keys(errors).length > 0) {
             setErroresPago(errors);
@@ -203,11 +287,7 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
         setProcesando(true);
         setErrorCompra('');
         try {
-            const resp = await api.post('/compras', {
-                evento_id: eventoId,
-                zona_id: zonaSeleccionada.id,
-                cantidad,
-            });
+            const resp = await api.post(`/reservas/${reservaId}/confirmar`);
             setCodigoIngreso(resp.data.codigo_ingreso);
             setConfirmado(true);
             sessionStorage.removeItem(SESSION_KEY);
@@ -217,7 +297,7 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
         } finally {
             setProcesando(false);
         }
-    }, [validarFormularioPago, eventoId, zonaSeleccionada, cantidad]);
+    }, [validarFormularioPago, reservaId, reservaExpirada]);
 
     const { evento, zonas } = datos || {};
 
@@ -378,8 +458,12 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
                                         {errorValidacion && <p className="text-xs text-red-400 mb-4 -mt-1">{errorValidacion}</p>}
 
                                         <div className="flex flex-col sm:flex-row gap-2.5 mb-4 sm:mb-5">
-                                            <button onClick={handleSiguiente} className="flex-1 px-6 py-3 bg-white text-gray-950 text-sm font-semibold hover:bg-gray-100 active:bg-gray-200 transition-colors duration-100">
-                                                {usuario ? 'Siguiente' : 'Continuar con login'}
+                                            <button
+                                                onClick={handleSiguiente}
+                                                disabled={creandoReserva}
+                                                className="flex-1 px-6 py-3 bg-white text-gray-950 text-sm font-semibold hover:bg-gray-100 active:bg-gray-200 transition-colors duration-100 disabled:opacity-60 disabled:cursor-not-allowed"
+                                            >
+                                                {creandoReserva ? 'Reservando…' : usuario ? 'Siguiente' : 'Continuar con login'}
                                             </button>
                                             <button onClick={toggleInfo} className="sm:flex-none px-5 py-3 border border-white/10 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-100 flex items-center justify-center gap-2">
                                                 Más información
@@ -410,16 +494,43 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
                             </div>
                         )}
 
-                        {/* ── PASO 2: Checkout ── */}
+                        {/* ── PASO 2: Checkout con Ticket Holding ── */}
                         {paso === 2 && !confirmado && (
                             <div className="flex-1 overflow-y-auto">
                                 <div className="p-4 sm:p-5 md:p-8">
-                                    <button onClick={volverAPaso1} className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors duration-100 mb-5">
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                        </svg>
-                                        Volver
-                                    </button>
+                                    {/* Header con timer y botón volver */}
+                                    <div className="flex items-center justify-between mb-5">
+                                        <button onClick={volverAPaso1} className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors duration-100">
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                            </svg>
+                                            Volver
+                                        </button>
+
+                                        {/* Countdown Timer */}
+                                        {reservaId && !reservaExpirada && (
+                                            <div className={`flex items-center gap-2 px-3 py-1.5 border text-xs font-semibold tabular-nums ${
+                                                tiempoRestante <= 60
+                                                    ? 'border-red-500/30 bg-red-500/10 text-red-400'
+                                                    : tiempoRestante <= 180
+                                                        ? 'border-amber-500/30 bg-amber-500/10 text-amber-400'
+                                                        : 'border-purple-500/30 bg-purple-500/10 text-purple-400'
+                                            }`}>
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <span>{formatearTiempo(tiempoRestante)}</span>
+                                                <span className="hidden sm:inline text-[10px] opacity-70 uppercase tracking-wider">restantes</span>
+                                            </div>
+                                        )}
+
+                                        {reservaExpirada && (
+                                            <span className="flex items-center gap-1.5 px-3 py-1.5 border border-red-500/30 bg-red-500/10 text-red-400 text-xs font-semibold">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                                                Reserva expirada
+                                            </span>
+                                        )}
+                                    </div>
 
                                     <div className="flex flex-col md:flex-row gap-6 lg:gap-10">
 
@@ -533,10 +644,10 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
                                             {/* Botón confirmar — solo mobile */}
                                             <button
                                                 type="submit"
-                                                disabled={procesando}
+                                                disabled={procesando || reservaExpirada}
                                                 className="w-full md:hidden px-6 py-3 bg-white text-gray-950 text-sm font-semibold hover:bg-gray-100 active:bg-gray-200 transition-colors duration-100 mt-1 disabled:opacity-60 disabled:cursor-not-allowed"
                                             >
-                                                {procesando ? 'Procesando…' : 'Confirmar reserva'}
+                                                {procesando ? 'Procesando…' : reservaExpirada ? 'Reserva expirada' : 'Confirmar reserva'}
                                             </button>
                                         </form>
 
@@ -572,10 +683,10 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
                                             <button
                                                 type="submit"
                                                 form="form-pago"
-                                                disabled={procesando}
+                                                disabled={procesando || reservaExpirada}
                                                 className="w-full hidden md:block mt-3 px-6 py-3 bg-white text-gray-950 text-sm font-semibold hover:bg-gray-100 active:bg-gray-200 transition-colors duration-100 disabled:opacity-60 disabled:cursor-not-allowed"
                                             >
-                                                {procesando ? 'Procesando…' : 'Confirmar reserva'}
+                                                {procesando ? 'Procesando…' : reservaExpirada ? 'Reserva expirada' : 'Confirmar reserva'}
                                             </button>
 
                                             {errorCompra && (

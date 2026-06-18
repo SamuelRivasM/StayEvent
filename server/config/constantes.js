@@ -49,6 +49,16 @@ const MAX_DELAY_MS = 4000;
 const INTENTOS_ANTES_DELAY = 3;
 const LIMPIEZA_INTENTOS_MS = 30 * 60 * 1000; // 30 minutos
 
+// ── Reservas temporales (Ticket Holding) ──────────────────
+
+const RESERVA_DURACION_MS    = 10 * 60 * 1000;   // 10 minutos
+const LIMPIEZA_RESERVAS_MS   = 60 * 1000;         // cada 60 segundos
+const RESERVA_DURACION_MIN   = 10;                // para SQL INTERVAL
+
+// ── Check-in ──────────────────────────────────────────────
+
+const MAX_CHECKIN_BATCH = 50;
+
 // ── JWT ────────────────────────────────────────────────────
 
 const MIN_JWT_SECRET_LENGTH = 32;
@@ -73,5 +83,9 @@ module.exports = Object.freeze({
     MAX_DELAY_MS,
     INTENTOS_ANTES_DELAY,
     LIMPIEZA_INTENTOS_MS,
+    RESERVA_DURACION_MS,
+    LIMPIEZA_RESERVAS_MS,
+    RESERVA_DURACION_MIN,
+    MAX_CHECKIN_BATCH,
     MIN_JWT_SECRET_LENGTH,
 });
