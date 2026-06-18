@@ -1,0 +1,42 @@
+name: Deploy Backend to Azure App Service
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'server/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install dependencies
+      run: |
+        cd server
+        npm ci
+
+    - name: Run tests (opcional)
+      run: |
+        cd server
+        npm test || true
+
+    - name: Deploy to Azure App Service
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: 'stayevent-backend'
+        publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_BACKEND }}
+        package: './server'
+
+    - name: Post deployment message
+      if: success()
+      run: echo "✅ Backend deployed successfully!"
