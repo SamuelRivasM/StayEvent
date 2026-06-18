@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 const GRADIENTE_CATEGORIA = {
     'Conciertos': 'from-violet-950 via-purple-900 to-gray-900',
@@ -25,7 +26,7 @@ const formatearFecha = (fecha) => {
 };
 
 const etiquetaPrecio = (precioMin) => {
-    if (precioMin === null || precioMin === undefined) return { texto: 'Ver precios', clase: 'text-gray-600' };
+    if (precioMin === null || precioMin === undefined) return { texto: 'Ver precios', clase: 'text-white/70' };
     const val = Number(precioMin);
     if (val === 0) return { texto: 'Gratis', clase: 'text-emerald-400' };
     const str = `S/. ${val % 1 === 0 ? val : val.toFixed(2)}`;
@@ -68,7 +69,7 @@ const TarjetaEvento = ({ evento, onClick }) => {
 
                 {/* Cabecera: categoría y precio */}
                 <div className="absolute top-0 inset-x-0 p-3 flex justify-between items-start">
-                    <span className="text-[10px] font-medium tracking-widest uppercase text-white/50 leading-none pt-0.5">
+                    <span className="text-xs font-medium tracking-widest uppercase text-white/75 leading-none pt-0.5">
                         {evento.categoria}
                     </span>
                     <span className={`text-xs font-bold leading-none ${clase}`}>
@@ -85,11 +86,11 @@ const TarjetaEvento = ({ evento, onClick }) => {
                         <p className="text-xs text-gray-400 leading-none">
                             {formatearFecha(evento.fecha)}
                             {evento.hora && (
-                                <span className="text-gray-600"> · {String(evento.hora).substring(0, 5)}</span>
+                                <span className="text-gray-400"> · {String(evento.hora).substring(0, 5)}</span>
                             )}
                         </p>
                         {evento.distrito && (
-                            <p className="text-xs text-gray-500 leading-none truncate">
+                            <p className="text-xs text-gray-400 leading-none truncate">
                                 {evento.distrito}
                             </p>
                         )}
@@ -98,6 +99,24 @@ const TarjetaEvento = ({ evento, onClick }) => {
             </div>
         </article>
     );
+};
+
+TarjetaEvento.propTypes = {
+    evento: PropTypes.shape({
+        id: PropTypes.number,
+        titulo: PropTypes.string.isRequired,
+        categoria: PropTypes.string,
+        fecha: PropTypes.string,
+        hora: PropTypes.string,
+        distrito: PropTypes.string,
+        imagen_url: PropTypes.string,
+        precio_min: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }).isRequired,
+    onClick: PropTypes.func,
+};
+
+TarjetaEvento.defaultProps = {
+    onClick: null,
 };
 
 export default TarjetaEvento;

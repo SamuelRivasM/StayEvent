@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../servicios/api';
 
 const IconoEmail = () => (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -41,7 +42,7 @@ const RecuperarPassword = () => {
         setError('');
     };
 
-    const manejarEnvio = (e) => {
+    const manejarEnvio = async (e) => {
         e.preventDefault();
 
         if (!email.trim()) {
@@ -56,12 +57,16 @@ const RecuperarPassword = () => {
         }
 
         setCargando(true);
+        setError('');
 
-        // Simulación de envío (solo frontend por ahora)
-        setTimeout(() => {
-            setCargando(false);
+        try {
+            await api.post('/auth/recover-password', { email: email.trim() });
             setEnviado(true);
-        }, 1500);
+        } catch (err) {
+            setError(err.response?.data?.mensaje || 'Error al enviar el enlace de recuperación.');
+        } finally {
+            setCargando(false);
+        }
     };
 
     return (

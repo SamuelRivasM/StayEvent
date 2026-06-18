@@ -112,7 +112,12 @@ const Registro = () => {
     // Autenticación
 
     const manejarCambio = (e) => {
-        setFormulario((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+        const { name, value } = e.target;
+        let formatted = value;
+        if (name === 'nombre' || name === 'apellido') {
+            formatted = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ '-]/g, '').slice(0, 50);
+        }
+        setFormulario((prev) => ({ ...prev, [name]: formatted }));
         setError('');
     };
 
@@ -127,6 +132,16 @@ const Registro = () => {
         }
         if (nombre.length < 2 || apellido.length < 2) {
             return 'Nombre y apellido deben tener al menos 2 caracteres.';
+        }
+        if (nombre.length > 50 || apellido.length > 50) {
+            return 'Nombre y apellido no deben exceder 50 caracteres.';
+        }
+        const REGEX_NOMBRE = /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ '-]+$/;
+        if (!REGEX_NOMBRE.test(nombre)) {
+            return 'El nombre solo puede contener letras, espacios, apóstrofes y guiones.';
+        }
+        if (!REGEX_NOMBRE.test(apellido)) {
+            return 'El apellido solo puede contener letras, espacios, apóstrofes y guiones.';
         }
         if (!email) {
             return 'El correo electrónico es obligatorio.';
@@ -212,6 +227,7 @@ const Registro = () => {
 
             {/* Panel izquierdo: imagen de evento */}
             <div
+                aria-hidden="true"
                 className="hidden lg:flex lg:w-[58%] relative flex-col justify-between p-12"
                 style={{
                     backgroundImage: 'url(https://www.tarracoarena.com/wp-content/uploads/2023/06/2023-Concierto-TarracoArena.jpg   )',
@@ -224,22 +240,22 @@ const Registro = () => {
 
                 {/* Logo superior */}
                 <div className="relative z-10">
-                    <Link to="/" className="text-white text-xl font-bold tracking-tight hover:text-purple-200 transition-colors">Stay Event</Link>
+                    <Link to="/" className="text-white text-xl font-bold tracking-tight hover:text-purple-200 transition-colors" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.9)' }}>Stay Event</Link>
                 </div>
 
                 {/* Texto inferior */}
                 <div className="relative z-10">
-                    <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
+                    <h2 className="text-4xl font-bold text-white mb-4 leading-tight" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.9)' }}>
                         Empieza tu aventura en el mundo de<br /> eventos y elige tus preferencias
                     </h2>
-                    <p className="text-white/60 text-base max-w-sm leading-relaxed">
+                    <p className="text-white/80 text-base max-w-sm leading-relaxed" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.9)' }}>
                         Crea tu cuenta gratis y accede a los mejores conciertos, festivales y espectáculos en vivo.
                     </p>
                 </div>
             </div>
 
             {/* Panel derecho: formulario */}
-            <div className="flex-1 flex items-center justify-center px-6 py-10 bg-white overflow-y-auto">
+            <main className="flex-1 flex items-center justify-center px-6 py-10 bg-white overflow-y-auto">
                 <div className="w-full max-w-[400px]">
 
                     {/* Logo solo en mobile */}
@@ -250,7 +266,7 @@ const Registro = () => {
                     {/* Encabezado */}
                     <div className="mb-7">
                         <h1 className="text-2xl font-bold text-gray-900 mb-1">Crear una cuenta</h1>
-                        <p className="text-sm text-gray-500">Rellena el siguiente formulario con tus datos para continuar</p>
+                        <p className="text-sm text-gray-600">Rellena el siguiente formulario con tus datos para continuar</p>
                     </div>
 
                     {/* Alerta de error */}
@@ -463,7 +479,7 @@ const Registro = () => {
                         </Link>
                     </p>
                 </div>
-            </div>
+            </main>
         </div>
     );
 };

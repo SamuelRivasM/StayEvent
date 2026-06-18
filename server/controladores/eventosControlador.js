@@ -1,6 +1,10 @@
-const { pool } = require('../config/db');
+// Operaciones y publicación de eventos
 
-const CATEGORIAS_VALIDAS = new Set(['Conciertos', 'Festivales', 'Fiestas / Discoteca']);
+const { pool } = require('../config/db');
+const { logError } = require('../config/logger');
+const { CATEGORIAS_VALIDAS } = require('../config/constantes');
+
+const CATEGORIAS_SET = new Set(CATEGORIAS_VALIDAS);
 
 const sanitizarTexto = (str, max) => {
     if (typeof str !== 'string') return null;
@@ -60,15 +64,22 @@ const obtenerEventos = async (req, res) => {
 
         if (categoria) { query += ' AND e.categoria = ?'; params.push(categoria); }
         if (distrito) { query += ' AND e.distrito = ?'; params.push(distrito); }
-        if (busqueda) { query += ' AND e.titulo LIKE ?'; params.push(`%${busqueda}%`); }
+        // Escapar comodines de LIKE
+        if (busqueda) {
+            const busquedaSanitizada = String(busqueda)
+                .replace(/%/g, '\\%')
+                .replace(/_/g, '\\_');
+            query += ' AND e.titulo LIKE ?';
+            params.push(`%${busquedaSanitizada}%`);
+        }
 
         query += ' ORDER BY e.fecha ASC';
 
         const [eventos] = await pool.query(query, params);
         res.json({ eventos });
     } catch (error) {
-        console.error('Error al obtener eventos:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor.' });
+        const idError = logError('Eventos.obtenerEventos', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
     }
 };
 
@@ -102,8 +113,8 @@ const obtenerDetalleEvento = async (req, res) => {
 
         res.json({ evento: eventos[0], zonas });
     } catch (error) {
-        console.error('Error al obtener detalle del evento:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor.' });
+        const idError = logError('Eventos.obtenerDetalleEvento', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
     }
 };
 
@@ -128,8 +139,8 @@ const obtenerEstadisticas = async (req, res) => {
         );
         res.json({ estadisticas: { ...statsRows[0], stock_total: stockRows[0].stock_total } });
     } catch (error) {
-        console.error('Error al obtener estadísticas:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor.' });
+        const idError = logError('Eventos.obtenerEstadisticas', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
     }
 };
 
@@ -161,8 +172,8 @@ const obtenerEventosOrganizador = async (req, res) => {
 
         res.json({ eventos });
     } catch (error) {
-        console.error('Error al obtener eventos del organizador:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor.' });
+        const idError = logError('Eventos.obtenerEventosOrganizador', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
     }
 };
 
@@ -174,7 +185,7 @@ const crearEvento = async (req, res) => {
         if (!titulo || !categoria || !fecha || !hora || !lugar) {
             return res.status(400).json({ mensaje: 'Título, categoría, fecha, hora y lugar son obligatorios.' });
         }
-        if (!CATEGORIAS_VALIDAS.has(categoria)) {
+        if (!CATEGORIAS_SET.has(categoria)) {
             return res.status(400).json({ mensaje: 'Categoría no válida.' });
         }
         if (!esFechaValida(fecha)) {
@@ -197,8 +208,8 @@ const crearEvento = async (req, res) => {
 
         const [resultado] = await pool.query(
             `INSERT INTO eventos
-                (titulo, descripcion, categoria, fecha, hora, distrito, lugar, imagen_url, imagen_mapa, organizador_id, activo, eliminado)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)`,
+            (titulo, descripcion, categoria, fecha, hora, distrito, lugar, imagen_url, imagen_mapa, organizador_id, activo, eliminado)
+             VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)`,
             [tituloSanitizado, descripcionSanitizada, categoria, fecha, hora, distritoSanitizado || null, lugarSanitizado, imagenSanitizada || null, imagenMapaSanitizada || null, req.usuario.id]
         );
 
@@ -206,8 +217,8 @@ const crearEvento = async (req, res) => {
 
         res.status(201).json({ mensaje: 'Evento creado correctamente.', id: resultado.insertId });
     } catch (error) {
-        console.error('Error al crear evento:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor.' });
+        const idError = logError('Eventos.crearEvento', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
     }
 };
 
@@ -232,7 +243,7 @@ const actualizarEvento = async (req, res) => {
         if (!titulo || !categoria || !fecha || !hora || !lugar) {
             return res.status(400).json({ mensaje: 'Título, categoría, fecha, hora y lugar son obligatorios.' });
         }
-        if (!CATEGORIAS_VALIDAS.has(categoria)) {
+        if (!CATEGORIAS_SET.has(categoria)) {
             return res.status(400).json({ mensaje: 'Categoría no válida.' });
         }
         if (!esFechaValida(fecha)) {
@@ -266,8 +277,8 @@ const actualizarEvento = async (req, res) => {
 
         res.json({ mensaje: 'Evento actualizado correctamente.' });
     } catch (error) {
-        console.error('Error al actualizar evento:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor.' });
+        const idError = logError('Eventos.actualizarEvento', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
     }
 };
 
@@ -298,8 +309,8 @@ const cambiarEstadoEvento = async (req, res) => {
 
         res.json({ mensaje: `Evento ${nuevoEstado ? 'activado' : 'desactivado'} correctamente.`, activo: nuevoEstado });
     } catch (error) {
-        console.error('Error al cambiar estado del evento:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor.' });
+        const idError = logError('Eventos.cambiarEstadoEvento', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
     }
 };
 
@@ -326,8 +337,262 @@ const eliminarEvento = async (req, res) => {
 
         res.json({ mensaje: 'Evento eliminado correctamente.' });
     } catch (error) {
-        console.error('Error al eliminar evento:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor.' });
+        const idError = logError('Eventos.eliminarEvento', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
+    }
+};
+
+// GET /api/eventos/dashboard-organizador — consolidado de métricas reales para el organizador
+const obtenerDashboardOrganizador = async (req, res) => {
+    const organizadorId = req.usuario.id;
+
+    try {
+        // 1. KPIs
+        // Ingresos totales & Tickets vendidos
+        const [kpiRows] = await pool.query(
+            `SELECT 
+                COALESCE(SUM(c.subtotal), 0) AS ingresos_totales,
+                COALESCE(SUM(c.cantidad), 0) AS tickets_vendidos
+             FROM compras c
+             JOIN eventos e ON c.evento_id = e.id
+             WHERE e.organizador_id = ? AND c.estado = 'confirmado' AND e.eliminado = 0`,
+            [organizadorId]
+        );
+
+        // Capacidad total (stock actual + vendidos)
+        const [stockRows] = await pool.query(
+            `SELECT COALESCE(SUM(z.stock), 0) AS stock_total
+             FROM zonas_evento z
+             JOIN eventos e ON z.evento_id = e.id
+             WHERE e.organizador_id = ? AND e.eliminado = 0 AND z.activo = 1`,
+            [organizadorId]
+        );
+
+        // Check-ins (asistentes)
+        const [checkinRows] = await pool.query(
+            `SELECT COALESCE(SUM(ch.cantidad_personas), 0) AS total_asistentes
+             FROM checkins ch
+             JOIN compras c ON ch.compra_id = c.id
+             JOIN eventos e ON c.evento_id = e.id
+             WHERE e.organizador_id = ? AND e.eliminado = 0 AND c.estado = 'confirmado'`,
+            [organizadorId]
+        );
+
+        // Crecimiento mensual (ingresos últimos 30 días vs anteriores 30 días)
+        const [growthRows] = await pool.query(
+            `SELECT 
+                COALESCE(SUM(CASE WHEN c.fecha_compra >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN c.subtotal ELSE 0 END), 0) AS ingresos_ultimos_30,
+                COALESCE(SUM(CASE WHEN c.fecha_compra >= DATE_SUB(NOW(), INTERVAL 60 DAY) AND c.fecha_compra < DATE_SUB(NOW(), INTERVAL 30 DAY) THEN c.subtotal ELSE 0 END), 0) AS ingresos_previos_30
+             FROM compras c
+             JOIN eventos e ON c.evento_id = e.id
+             WHERE e.organizador_id = ? AND c.estado = 'confirmado' AND e.eliminado = 0`,
+            [organizadorId]
+        );
+
+        const ingresosTotales = Number(kpiRows[0].ingresos_totales);
+        const ticketsVendidos = Number(kpiRows[0].tickets_vendidos);
+        const stockTotal = Number(stockRows[0].stock_total);
+        const totalAsistentes = Number(checkinRows[0].total_asistentes);
+        const ultimos30 = Number(growthRows[0].ingresos_ultimos_30);
+        const previos30 = Number(growthRows[0].ingresos_previos_30);
+
+        const anterior = ingresosTotales - ultimos30 + previos30;
+        const crecimiento = previos30 > 0
+            ? Math.round(((ultimos30 - previos30) / previos30) * 1000) / 10
+            : ultimos30 > 0 ? 100.0 : 0.0;
+
+        const tasaCheckin = ticketsVendidos > 0
+            ? Math.round((totalAsistentes / ticketsVendidos) * 1000) / 10
+            : 0.0;
+
+        const kpis = {
+            ingresos: {
+                actual: ingresosTotales,
+                anterior: anterior,
+                crecimiento: crecimiento
+            },
+            tickets: {
+                vendidos: ticketsVendidos,
+                capacidad: stockTotal + ticketsVendidos
+            },
+            checkin: {
+                asistentes: totalAsistentes,
+                vendidos: ticketsVendidos,
+                tasa: tasaCheckin
+            }
+        };
+
+        // 2. Tendencia de 30 días (ingresos y tickets por día)
+        const [tendenciaRows] = await pool.query(
+            `SELECT 
+                DATE_FORMAT(c.fecha_compra, '%Y-%m-%d') AS dia,
+                COALESCE(SUM(c.subtotal), 0) AS ingresos,
+                COALESCE(SUM(c.cantidad), 0) AS tickets
+             FROM compras c
+             JOIN eventos e ON c.evento_id = e.id
+             WHERE e.organizador_id = ? AND c.estado = 'confirmado' AND e.eliminado = 0
+               AND c.fecha_compra >= DATE_SUB(CURDATE(), INTERVAL 29 DAY)
+             GROUP BY DATE(c.fecha_compra)
+             ORDER BY dia ASC`,
+            [organizadorId]
+        );
+
+        // Llenar los días vacíos en JavaScript para evitar huecos en Recharts
+        const tendencia30dias = [];
+        const hoy = new Date();
+        const diasMapa = new Map(tendenciaRows.map(r => [r.dia, r]));
+
+        for (let i = 29; i >= 0; i--) {
+            const d = new Date(hoy);
+            d.setDate(hoy.getDate() - i);
+            const fechaStr = d.toISOString().slice(0, 10);
+            const diaReg = diasMapa.get(fechaStr);
+            tendencia30dias.push({
+                dia: fechaStr,
+                ingresos: diaReg ? Number(diaReg.ingresos) : 0,
+                tickets: diaReg ? Number(diaReg.tickets) : 0
+            });
+        }
+
+        // 3. Distribución por zona
+        const [distribucionRows] = await pool.query(
+            `SELECT 
+                z.nombre AS categoria,
+                COALESCE(SUM(c.cantidad), 0) AS tickets,
+                COALESCE(SUM(c.subtotal), 0) AS ingresos
+             FROM compras c
+             JOIN eventos e ON c.evento_id = e.id
+             JOIN zonas_evento z ON c.zona_id = z.id
+             WHERE e.organizador_id = ? AND c.estado = 'confirmado' AND e.eliminado = 0
+             GROUP BY z.nombre
+             ORDER BY tickets DESC`,
+            [organizadorId]
+        );
+        const distribucionZonas = distribucionRows.map(r => ({
+            categoria: r.categoria,
+            tickets: Number(r.tickets),
+            ingresos: Number(r.ingresos)
+        }));
+
+        // 4. Eficiencia de asistencia por evento
+        const [eficienciaRows] = await pool.query(
+            `SELECT 
+                e.titulo AS evento,
+                (SELECT COALESCE(SUM(c.cantidad), 0) FROM compras c WHERE c.evento_id = e.id AND c.estado = 'confirmado') AS vendidas,
+                (SELECT COALESCE(SUM(ch.cantidad_personas), 0) FROM checkins ch JOIN compras c ON ch.compra_id = c.id WHERE c.evento_id = e.id AND c.estado = 'confirmado') AS checkin
+             FROM eventos e
+             WHERE e.organizador_id = ? AND e.eliminado = 0
+             ORDER BY e.fecha DESC`,
+            [organizadorId]
+        );
+        const eficienciaAsistencia = eficienciaRows.map(r => ({
+            evento: r.evento,
+            vendidas: Number(r.vendidas),
+            checkin: Number(r.checkin)
+        }));
+
+        // 5. Eventos activos
+        const [eventosRows] = await pool.query(
+            `SELECT 
+                e.id,
+                e.titulo,
+                DATE_FORMAT(e.fecha, '%Y-%m-%d') AS fecha,
+                CASE WHEN e.activo = 1 THEN 'activo' ELSE 'pausado' END AS estado,
+                e.categoria,
+                (SELECT COALESCE(SUM(c.cantidad), 0) FROM compras c WHERE c.evento_id = e.id AND c.estado = 'confirmado') AS entradas_vendidas,
+                (SELECT COALESCE(SUM(z.stock), 0) FROM zonas_evento z WHERE z.evento_id = e.id AND z.activo = 1) + 
+                (SELECT COALESCE(SUM(c.cantidad), 0) FROM compras c WHERE c.evento_id = e.id AND c.estado = 'confirmado') AS capacidad_total,
+                (SELECT COALESCE(SUM(ch.cantidad_personas), 0) FROM checkins ch JOIN compras c ON ch.compra_id = c.id WHERE c.evento_id = e.id AND c.estado = 'confirmado') AS asistentes_ingresados,
+                (SELECT COALESCE(SUM(c.subtotal), 0) FROM compras c WHERE c.evento_id = e.id AND c.estado = 'confirmado') AS ingresos
+             FROM eventos e
+             WHERE e.organizador_id = ? AND e.eliminado = 0
+             ORDER BY e.fecha DESC`,
+            [organizadorId]
+        );
+        const eventosActivos = eventosRows.map(r => ({
+            id: r.id,
+            titulo: r.titulo,
+            fecha: r.fecha,
+            estado: r.estado,
+            categoria: r.categoria,
+            entradas_vendidas: Number(r.entradas_vendidas),
+            capacidad_total: Number(r.capacidad_total),
+            asistentes_ingresados: Number(r.asistentes_ingresados),
+            ingresos: Number(r.ingresos)
+        }));
+
+        // 6. Actividad reciente (Compras, checkins y reservas)
+        const [actividadRows] = await pool.query(
+            `(
+                SELECT 
+                    c.id,
+                    'Compra de Ticket' AS tipo,
+                    CONCAT(u.nombre, ' ', u.apellido) AS usuario,
+                    e.titulo AS evento,
+                    c.cantidad,
+                    c.subtotal AS monto,
+                    c.fecha_compra AS fecha
+                FROM compras c
+                JOIN usuarios u ON c.usuario_id = u.id
+                JOIN eventos e ON c.evento_id = e.id
+                WHERE e.organizador_id = ? AND c.estado = 'confirmado'
+            )
+            UNION ALL
+            (
+                SELECT 
+                    ch.id,
+                    'Check-in QR' AS tipo,
+                    CONCAT(u.nombre, ' ', u.apellido) AS usuario,
+                    e.titulo AS evento,
+                    ch.cantidad_personas AS cantidad,
+                    0.00 AS monto,
+                    ch.fecha_checkin AS fecha
+                FROM checkins ch
+                JOIN compras c ON ch.compra_id = c.id
+                JOIN usuarios u ON c.usuario_id = u.id
+                JOIN eventos e ON c.evento_id = e.id
+                WHERE e.organizador_id = ? AND c.estado = 'confirmado'
+            )
+            UNION ALL
+            (
+                SELECT 
+                    r.id,
+                    'Reserva Temporal' AS tipo,
+                    CONCAT(u.nombre, ' ', u.apellido) AS usuario,
+                    e.titulo AS evento,
+                    r.cantidad,
+                    r.subtotal AS monto,
+                    r.creado_en AS fecha
+                FROM reservas_temporales r
+                JOIN usuarios u ON r.usuario_id = u.id
+                JOIN eventos e ON r.evento_id = e.id
+                WHERE e.organizador_id = ? AND r.expira_en > NOW()
+            )
+            ORDER BY fecha DESC
+            LIMIT 10`,
+            [organizadorId, organizadorId, organizadorId]
+        );
+        const actividadReciente = actividadRows.map(r => ({
+            id: r.id,
+            tipo: r.tipo,
+            usuario: r.usuario,
+            evento: r.evento,
+            cantidad: Number(r.cantidad),
+            monto: Number(r.monto),
+            fecha: r.fecha
+        }));
+
+        res.json({
+            kpis,
+            tendencia30dias,
+            distribucionZonas,
+            eficienciaAsistencia,
+            eventosActivos,
+            actividadReciente
+        });
+    } catch (error) {
+        const idError = logError('Eventos.obtenerDashboardOrganizador', error);
+        res.status(500).json({ mensaje: 'Error al obtener datos del dashboard.', referencia: idError });
     }
 };
 
@@ -336,6 +601,7 @@ module.exports = {
     obtenerDetalleEvento,
     obtenerEstadisticas,
     obtenerEventosOrganizador,
+    obtenerDashboardOrganizador,
     crearEvento,
     actualizarEvento,
     cambiarEstadoEvento,
