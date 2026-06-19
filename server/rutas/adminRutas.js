@@ -14,6 +14,7 @@ const {
     listarEventosAdmin,
     obtenerEventoAdmin,
     cambiarEstadoEvento,
+    listarCompras,
 } = require('../controladores/adminControlador');
 const { streamInsights } = require('../controladores/insightsControlador');
 
@@ -46,6 +47,9 @@ router.get('/usuarios',         verificarToken, esAdmin, listarUsuarios);
 router.get('/usuarios/:id',     verificarToken, esAdmin, obtenerUsuario);
 router.put('/usuarios/:id',     verificarToken, esAdmin, editarUsuario);
 router.delete('/usuarios/:id',  verificarToken, esAdmin, eliminarUsuario);
+
+// Gestión de compras
+router.get('/compras', verificarToken, esAdmin, listarCompras);
 
 // Gestión de eventos
 router.get('/eventos',              verificarToken, esAdmin, listarEventosAdmin);
