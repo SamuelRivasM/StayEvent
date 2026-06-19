@@ -111,7 +111,10 @@ const obtenerDetalleEvento = async (req, res) => {
             [eventoId]
         );
 
-        res.json({ evento: eventos[0], zonas });
+        // Calcular stock total para flag de agotado
+        const stockTotal = zonas.reduce((acc, z) => acc + z.stock, 0);
+
+        res.json({ evento: eventos[0], zonas, isSoldOut: stockTotal === 0 });
     } catch (error) {
         const idError = logError('Eventos.obtenerDetalleEvento', error);
         res.status(500).json({ mensaje: 'Error interno del servidor.', referencia: idError });
