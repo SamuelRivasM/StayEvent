@@ -163,9 +163,21 @@ const agregarColumnaEventosSiNoExiste = async (columna) => {
 
 // ── Inicialización de DB ──────────────────────────────────────────────────────
 
+const agregarColumnaSiNoExiste = async (tabla, columna, definicion) => {
+    const [filas] = await pool.execute(
+        `SELECT COUNT(*) AS count FROM information_schema.columns
+         WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?`,
+        [tabla, columna]
+    );
+    if (filas[0].count === 0) {
+        await pool.execute(`ALTER TABLE \`${tabla}\` ADD COLUMN \`${columna}\` ${definicion}`);
+        logInfo('DB', `Columna '${columna}' agregada a tabla ${tabla}.`);
+    }
+};
+
 const inicializarDB = async () => {
+    // Cada tabla en su propio try/catch para que un fallo no detenga las demás
     try {
-        // Crear tabla de sesiones activas
         await pool.execute(`
             CREATE TABLE IF NOT EXISTS sesiones_activas (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -180,15 +192,15 @@ const inicializarDB = async () => {
                 FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
-
-        // Limpiar sesiones expiradas
         await pool.execute(
             'UPDATE sesiones_activas SET activo = 0 WHERE expira_en < NOW() AND activo = 1'
         );
-
         logInfo('DB', 'Tabla sesiones_activas lista.');
+    } catch (error) {
+        logError('DB.inicializarDB.sesiones_activas', error);
+    }
 
-        // Crear tabla de reservas temporales (Ticket Holding)
+    try {
         await pool.execute(`
             CREATE TABLE IF NOT EXISTS reservas_temporales (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -207,9 +219,14 @@ const inicializarDB = async () => {
                 FOREIGN KEY (zona_id) REFERENCES zonas_evento(id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
+        // Garantizar columna creado_en si la tabla existía sin ella
+        await agregarColumnaSiNoExiste('reservas_temporales', 'creado_en', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
         logInfo('DB', 'Tabla reservas_temporales lista.');
+    } catch (error) {
+        logError('DB.inicializarDB.reservas_temporales', error);
+    }
 
-        // Crear tabla de check-ins
+    try {
         await pool.execute(`
             CREATE TABLE IF NOT EXISTS checkins (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -226,13 +243,16 @@ const inicializarDB = async () => {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
         logInfo('DB', 'Tabla checkins lista.');
+    } catch (error) {
+        logError('DB.inicializarDB.checkins', error);
+    }
 
-        // Agregar columnas faltantes a eventos (usando whitelist)
+    try {
         for (const columna of Object.keys(COLUMNAS_PERMITIDAS_EVENTOS)) {
             await agregarColumnaEventosSiNoExiste(columna);
         }
     } catch (error) {
-        logError('DB.inicializarDB', error);
+        logError('DB.inicializarDB.columnas_eventos', error);
     }
 };
 

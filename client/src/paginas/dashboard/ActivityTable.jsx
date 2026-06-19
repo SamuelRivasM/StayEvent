@@ -6,6 +6,23 @@
 //   - Diseño coherente con AdminCompras.jsx
 
 import React, { useState, useMemo, useCallback } from 'react';
+import BotonExportarCSV from '../../componentes/BotonExportarCSV';
+
+// ─── Columnas y formatos para exportación CSV ─────────────────────────────────
+
+const CSV_COLUMNAS = {
+    tipo:     'Tipo',
+    usuario:  'Usuario',
+    evento:   'Evento',
+    cantidad: 'Cantidad',
+    monto:    'Monto (S/)',
+    estado:   'Estado',
+    fecha:    'Fecha',
+};
+
+const CSV_OPCIONES = {
+    formatoColumnas: { monto: 'moneda', fecha: 'fecha' },
+};
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -149,6 +166,12 @@ const ActivityTable = ({ datos, cargando }) => {
                         <h2 className="text-sm font-bold text-white">Actividad Global Reciente</h2>
                         <p className="text-xs text-gray-400 mt-0.5">Últimas transacciones de la plataforma</p>
                     </div>
+                    <BotonExportarCSV
+                        datos={datos}
+                        columnas={CSV_COLUMNAS}
+                        nombreArchivo="actividad_global"
+                        opciones={CSV_OPCIONES}
+                    />
                 </div>
             </div>
 

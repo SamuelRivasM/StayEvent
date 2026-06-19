@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import api from '../servicios/api';
 
 // ─── Animaciones ──────────────────────────────────────────────────────────────
 
@@ -24,39 +25,6 @@ const KEYFRAMES = `
 const ANIM_OVERLAY = { animation: 'overlayIn 0.18s ease', willChange: 'opacity' };
 const ANIM_SCALE   = { animation: 'fadeScaleIn 0.18s cubic-bezier(0.4, 0, 0.2, 1)', willChange: 'transform, opacity' };
 
-// ─── Datos mockeados (multi-mes, multi-año) ───────────────────────────────────
-
-const COMPRAS_MOCK = [
-    // ── Noviembre 2025 ──
-    { id: 2001, email: 'pedro.sanchez@gmail.com',     nombre: 'Pedro Sánchez',     evento: 'Festival Luces de Lima',       cantidad: 2,  total: 180.00,  fecha: '2025-11-05T19:30:00' },
-    { id: 2002, email: 'rosa.martinez@outlook.com',   nombre: 'Rosa Martínez',     evento: 'Concierto Bad Bunny',          cantidad: 4,  total: 960.00,  fecha: '2025-11-12T10:15:00' },
-    { id: 2003, email: 'luis.herrera@yahoo.com',       nombre: 'Luis Herrera',      evento: 'Festival Luces de Lima',       cantidad: 1,  total: 90.00,   fecha: '2025-11-18T14:45:00' },
-
-    // ── Diciembre 2025 ──
-    { id: 2004, email: 'ana.quispe@gmail.com',         nombre: 'Ana Quispe',        evento: 'Fiesta Año Nuevo Premium',     cantidad: 6,  total: 1500.00, fecha: '2025-12-01T09:00:00' },
-    { id: 2005, email: 'carlos.ramirez@gmail.com',     nombre: 'Carlos Ramírez',    evento: 'Concierto Bad Bunny',          cantidad: 2,  total: 480.00,  fecha: '2025-12-10T16:20:00' },
-    { id: 2006, email: 'maria.silva@yahoo.com',        nombre: 'María Silva',       evento: 'Fiesta Año Nuevo Premium',     cantidad: 4,  total: 1000.00, fecha: '2025-12-22T11:30:00' },
-    { id: 2007, email: 'jorge.huamani@gmail.com',      nombre: 'Jorge Huamaní',     evento: 'Mercado Navideño Artesanal',   cantidad: 3,  total: 45.00,   fecha: '2025-12-24T08:10:00' },
-
-    // ── Febrero 2026 ──
-    { id: 2008, email: 'valentina.rojas@gmail.com',    nombre: 'Valentina Rojas',   evento: 'Stand Up Comedy Night',        cantidad: 2,  total: 80.00,   fecha: '2026-02-03T20:00:00' },
-    { id: 2009, email: 'fernando.diaz@outlook.com',    nombre: 'Fernando Díaz',     evento: 'Expo Arte Digital',            cantidad: 1,  total: 30.00,   fecha: '2026-02-14T12:00:00' },
-    { id: 2010, email: 'camila.torres@gmail.com',      nombre: 'Camila Torres',     evento: 'Stand Up Comedy Night',        cantidad: 5,  total: 200.00,  fecha: '2026-02-14T20:30:00' },
-    { id: 2011, email: 'diego.vargas@outlook.com',     nombre: 'Diego Vargas',      evento: 'Expo Arte Digital',            cantidad: 2,  total: 60.00,   fecha: '2026-02-21T15:45:00' },
-
-    // ── Marzo 2026 ──
-    { id: 2012, email: 'sofia.gutierrez@yahoo.com',    nombre: 'Sofía Gutiérrez',   evento: 'Tomorrowland Perú 2026',       cantidad: 3,  total: 510.00,  fecha: '2026-03-01T10:00:00' },
-    { id: 2013, email: 'ricardo.paredes@hotmail.com',  nombre: 'Ricardo Paredes',   evento: 'Tech Meetup Lima 2026',        cantidad: 1,  total: 0.00,    fecha: '2026-03-08T09:30:00' },
-    { id: 2014, email: 'lucia.mendoza@outlook.com',    nombre: 'Lucía Mendoza',     evento: 'Tomorrowland Perú 2026',       cantidad: 2,  total: 340.00,  fecha: '2026-03-15T14:20:00' },
-
-    // ── Mayo 2026 ──
-    { id: 2015, email: 'andres.castro@hotmail.com',    nombre: 'Andrés Castro',     evento: 'Concierto Coldplay Lima',      cantidad: 4,  total: 1200.00, fecha: '2026-05-02T09:45:00' },
-    { id: 2016, email: 'isabella.flores@gmail.com',    nombre: 'Isabella Flores',   evento: 'Festival Selvámonos',          cantidad: 2,  total: 170.00,  fecha: '2026-05-10T11:00:00' },
-    { id: 2017, email: 'carlos.ramirez@gmail.com',     nombre: 'Carlos Ramírez',    evento: 'Concierto Coldplay Lima',      cantidad: 2,  total: 600.00,  fecha: '2026-05-18T15:12:00' },
-    { id: 2018, email: 'pedro.sanchez@gmail.com',      nombre: 'Pedro Sánchez',     evento: 'Festival Selvámonos',          cantidad: 1,  total: 85.00,   fecha: '2026-05-20T17:30:00' },
-    { id: 2019, email: 'ana.quispe@gmail.com',         nombre: 'Ana Quispe',        evento: 'Concierto Coldplay Lima',      cantidad: 3,  total: 900.00,  fecha: '2026-05-25T14:30:00' },
-    { id: 2020, email: 'valentina.rojas@gmail.com',    nombre: 'Valentina Rojas',   evento: 'Stand Up Comedy Night',        cantidad: 2,  total: 80.00,   fecha: '2026-05-27T20:00:00' },
-];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -74,7 +42,7 @@ const formatFechaHora = (fecha) => {
 };
 
 const formatMoneda = (monto) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(monto);
+    new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(monto);
 
 /** Extrae periodos únicos (mes-año) ordenados cronológicamente de más reciente a más antiguo */
 const extraerPeriodos = (compras) => {
@@ -249,6 +217,7 @@ const AdminCompras = () => {
     const [compras, setCompras]           = useState([]);
     const [cargando, setCargando]         = useState(true);
     const [mostrarSkeleton, setMostrarSkeleton] = useState(false);
+    const [errorPagina, setErrorPagina]   = useState('');
 
     const [busqueda, setBusqueda]         = useState('');
     const [periodoSel, setPeriodoSel]     = useState('todos');
@@ -268,19 +237,30 @@ const AdminCompras = () => {
 
     // Skeleton diferido (se muestra tras 250ms para evitar parpadeos en redes rápidas)
     useEffect(() => {
+        let activo = true;
+
         const skeletonTimer = setTimeout(() => {
-            setMostrarSkeleton(true);
+            if (activo) setMostrarSkeleton(true);
         }, 250);
 
-        const timer = setTimeout(() => {
-            setCompras(COMPRAS_MOCK);
-            setCargando(false);
-            clearTimeout(skeletonTimer);
-            setMostrarSkeleton(false);
-        }, 50);
+        api.get('/admin/compras')
+            .then(({ data }) => {
+                if (!activo) return;
+                setCompras(data.compras || []);
+            })
+            .catch(() => {
+                if (!activo) return;
+                setErrorPagina('No se pudieron cargar las compras. Verifica tu conexión.');
+            })
+            .finally(() => {
+                if (!activo) return;
+                clearTimeout(skeletonTimer);
+                setMostrarSkeleton(false);
+                setCargando(false);
+            });
 
         return () => {
-            clearTimeout(timer);
+            activo = false;
             clearTimeout(skeletonTimer);
         };
     }, []);
@@ -342,6 +322,17 @@ const AdminCompras = () => {
                 </h1>
                 <div className="mt-3 h-px w-12 bg-gradient-to-r from-purple-500 to-transparent" />
             </div>
+
+            {/* ── Banner de error ────────────────────────────────── */}
+            {errorPagina && (
+                <div className="bg-red-500/[0.08] border border-red-500/20 text-red-400 px-4 py-3 text-sm mb-6 flex items-center justify-between gap-4">
+                    <span>{errorPagina}</span>
+                    <button
+                        onClick={() => setErrorPagina('')}
+                        className="text-red-400/50 hover:text-red-400 shrink-0 transition-colors"
+                    >✕</button>
+                </div>
+            )}
 
             {/* ── KPI Cards ──────────────────────────────────────── */}
             {mostrarSkeleton ? (

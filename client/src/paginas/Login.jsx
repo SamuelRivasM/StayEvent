@@ -93,6 +93,16 @@ const Login = () => {
             setCargando(false);
             return;
         }
+        if (passwordTrimmed.length < 8) {
+            setError('La contraseña debe tener al menos 8 caracteres.');
+            setCargando(false);
+            return;
+        }
+        if (!/[$%#]/.test(passwordTrimmed)) {
+            setError('La contraseña debe contener al menos un carácter especial ($, %, #).');
+            setCargando(false);
+            return;
+        }
 
         try {
             const respuesta = await api.post('/auth/login', {

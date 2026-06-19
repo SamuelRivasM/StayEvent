@@ -595,6 +595,45 @@ const cambiarEstadoEvento = async (req, res) => {
     }
 };
 
+// ─── Gestión de Compras ───────────────────────────────────────────────────────
+
+const listarCompras = async (req, res) => {
+    try {
+        const [rows] = await pool.query(`
+            SELECT
+                c.id,
+                c.cantidad,
+                c.subtotal     AS total,
+                c.estado,
+                c.fecha_compra AS fecha,
+                u.nombre,
+                u.apellido,
+                u.email,
+                e.titulo       AS evento
+            FROM compras c
+            JOIN usuarios u ON c.usuario_id = u.id
+            JOIN eventos e  ON c.evento_id  = e.id
+            WHERE c.estado = 'confirmado'
+            ORDER BY c.fecha_compra DESC
+        `);
+
+        res.json({
+            compras: rows.map(r => ({
+                id:       r.id,
+                nombre:   `${r.nombre} ${r.apellido}`,
+                email:    r.email,
+                evento:   r.evento,
+                cantidad: r.cantidad,
+                total:    parseFloat(r.total),
+                fecha:    r.fecha,
+            })),
+        });
+    } catch (error) {
+        const idError = logError('Admin.listarCompras', error);
+        res.status(500).json({ mensaje: 'Error al obtener compras.', referencia: idError });
+    }
+};
+
 module.exports = {
     obtenerMetricas,
     obtenerMetricasDashboard,
@@ -606,4 +645,5 @@ module.exports = {
     listarEventosAdmin,
     obtenerEventoAdmin,
     cambiarEstadoEvento,
+    listarCompras,
 };

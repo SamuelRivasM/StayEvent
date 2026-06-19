@@ -128,6 +128,16 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
         if (seleccionInicial.irACheckout) setPaso(2);
     }, [seleccionInicial, datos]);
 
+    // Auth Guard: si el paso 2 (checkout/pago) se muestra sin sesión activa,
+    // forzar redirección a login y limpiar historial para evitar bypass
+    useEffect(() => {
+        if (paso === 2 && !usuario) {
+            setPaso(1);
+            sessionStorage.removeItem(SESSION_KEY);
+            navigate('/login', { replace: true });
+        }
+    }, [paso, usuario, navigate]);
+
     const seleccionarZona = useCallback((zona) => {
         if (zona.stock <= 0) return;
         setZonaSeleccionada(zona);
@@ -193,7 +203,8 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
                 cantidad,
                 irACheckout: true,
             }));
-            navigate('/login');
+            // Usar replace para evitar que el usuario retroceda al modal sin auth
+            navigate('/login', { replace: true });
             return;
         }
 
@@ -299,7 +310,7 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
         }
     }, [validarFormularioPago, reservaId, reservaExpirada]);
 
-    const { evento, zonas } = datos || {};
+    const { evento, zonas, isSoldOut } = datos || {};
 
     const gradiente = useMemo(
         () => GRADIENTE_CATEGORIA[evento?.categoria] || 'from-gray-900 to-gray-950',
@@ -413,65 +424,79 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
 
                                         <div className="border-t border-white/5 mb-4" />
 
-                                        <div className="mb-4">
-                                            <p className="text-xs font-medium tracking-widest uppercase text-gray-400 mb-2.5">Zonas disponibles</p>
-                                            {zonas && zonas.length > 0 ? (
-                                                <div className="space-y-1.5 sm:space-y-2">
-                                                    {zonas.map((zona) => (
-                                                        <ZonaBtn
-                                                            key={zona.id}
-                                                            zona={zona}
-                                                            agotado={zona.stock <= 0}
-                                                            activa={zonaSeleccionada?.id === zona.id}
-                                                            onSeleccionar={seleccionarZona}
-                                                        />
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <p className="text-sm text-gray-400">No hay zonas disponibles.</p>
-                                            )}
-                                        </div>
-
-                                        {zonaSeleccionada && (
+                                        {/* ── Badge Entradas Agotadas ── */}
+                                        {isSoldOut ? (
                                             <div className="mb-4">
-                                                <p className="text-xs font-medium tracking-widest uppercase text-gray-400 mb-2.5">Cantidad</p>
-                                                <div className="flex items-center gap-4 sm:gap-5">
-                                                    <div className="flex items-center border border-white/10">
-                                                        <button onClick={decrementar} disabled={cantidad <= 1} aria-label="Reducir cantidad" className="w-10 h-10 flex items-center justify-center text-white hover:bg-white/5 active:bg-white/10 transition-colors duration-100 disabled:opacity-25 disabled:cursor-not-allowed">
-                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
-                                                        </button>
-                                                        <span className="w-10 text-center text-white font-semibold text-sm select-none">{cantidad}</span>
-                                                        <button onClick={incrementar} disabled={cantidad >= zonaSeleccionada.stock} aria-label="Aumentar cantidad" className="w-10 h-10 flex items-center justify-center text-white hover:bg-white/5 active:bg-white/10 transition-colors duration-100 disabled:opacity-25 disabled:cursor-not-allowed">
-                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12M6 12h12" /></svg>
-                                                        </button>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs text-gray-400 leading-none mb-1">{zonaSeleccionada.nombre} × {cantidad}</p>
-                                                        <p className="text-xl font-bold text-white leading-none">
-                                                            {Number(zonaSeleccionada.precio) === 0 ? 'Gratis' : `S/ ${subtotal % 1 === 0 ? subtotal : subtotal.toFixed(2)}`}
-                                                        </p>
-                                                    </div>
+                                                <div className="flex items-center justify-center gap-2.5 py-4 px-5 border border-red-500/20 bg-red-500/5 rounded-lg">
+                                                    <svg className="w-5 h-5 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                                    </svg>
+                                                    <span className="text-sm font-semibold text-red-400 uppercase tracking-wider">Entradas Agotadas</span>
                                                 </div>
                                             </div>
+                                        ) : (
+                                            <>
+                                                <div className="mb-4">
+                                                    <p className="text-xs font-medium tracking-widest uppercase text-gray-400 mb-2.5">Zonas disponibles</p>
+                                                    {zonas && zonas.length > 0 ? (
+                                                        <div className="space-y-1.5 sm:space-y-2">
+                                                            {zonas.map((zona) => (
+                                                                <ZonaBtn
+                                                                    key={zona.id}
+                                                                    zona={zona}
+                                                                    agotado={zona.stock <= 0}
+                                                                    activa={zonaSeleccionada?.id === zona.id}
+                                                                    onSeleccionar={seleccionarZona}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-sm text-gray-400">No hay zonas disponibles.</p>
+                                                    )}
+                                                </div>
+
+                                                {zonaSeleccionada && (
+                                                    <div className="mb-4">
+                                                        <p className="text-xs font-medium tracking-widest uppercase text-gray-400 mb-2.5">Cantidad</p>
+                                                        <div className="flex items-center gap-4 sm:gap-5">
+                                                            <div className="flex items-center border border-white/10">
+                                                                <button onClick={decrementar} disabled={cantidad <= 1} aria-label="Reducir cantidad" className="w-10 h-10 flex items-center justify-center text-white hover:bg-white/5 active:bg-white/10 transition-colors duration-100 disabled:opacity-25 disabled:cursor-not-allowed">
+                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
+                                                                </button>
+                                                                <span className="w-10 text-center text-white font-semibold text-sm select-none">{cantidad}</span>
+                                                                <button onClick={incrementar} disabled={cantidad >= zonaSeleccionada.stock} aria-label="Aumentar cantidad" className="w-10 h-10 flex items-center justify-center text-white hover:bg-white/5 active:bg-white/10 transition-colors duration-100 disabled:opacity-25 disabled:cursor-not-allowed">
+                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12M6 12h12" /></svg>
+                                                                </button>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs text-gray-400 leading-none mb-1">{zonaSeleccionada.nombre} × {cantidad}</p>
+                                                                <p className="text-xl font-bold text-white leading-none">
+                                                                    {Number(zonaSeleccionada.precio) === 0 ? 'Gratis' : `S/ ${subtotal % 1 === 0 ? subtotal : subtotal.toFixed(2)}`}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {errorValidacion && <p className="text-xs text-red-400 mb-4 -mt-1">{errorValidacion}</p>}
+
+                                                <div className="flex flex-col sm:flex-row gap-2.5 mb-4 sm:mb-5">
+                                                    <button
+                                                        onClick={handleSiguiente}
+                                                        disabled={creandoReserva}
+                                                        className="flex-1 px-6 py-3 bg-white text-gray-950 text-sm font-semibold hover:bg-gray-100 active:bg-gray-200 transition-colors duration-100 disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    >
+                                                        {creandoReserva ? 'Reservando…' : usuario ? 'Siguiente' : 'Continuar con login'}
+                                                    </button>
+                                                    <button onClick={toggleInfo} className="sm:flex-none px-5 py-3 border border-white/10 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-100 flex items-center justify-center gap-2">
+                                                        Más información
+                                                        <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${infoExpandida ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </>
                                         )}
-
-                                        {errorValidacion && <p className="text-xs text-red-400 mb-4 -mt-1">{errorValidacion}</p>}
-
-                                        <div className="flex flex-col sm:flex-row gap-2.5 mb-4 sm:mb-5">
-                                            <button
-                                                onClick={handleSiguiente}
-                                                disabled={creandoReserva}
-                                                className="flex-1 px-6 py-3 bg-white text-gray-950 text-sm font-semibold hover:bg-gray-100 active:bg-gray-200 transition-colors duration-100 disabled:opacity-60 disabled:cursor-not-allowed"
-                                            >
-                                                {creandoReserva ? 'Reservando…' : usuario ? 'Siguiente' : 'Continuar con login'}
-                                            </button>
-                                            <button onClick={toggleInfo} className="sm:flex-none px-5 py-3 border border-white/10 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-100 flex items-center justify-center gap-2">
-                                                Más información
-                                                <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${infoExpandida ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                                </svg>
-                                            </button>
-                                        </div>
 
                                         <div className={`overflow-hidden transition-[max-height,opacity] duration-200 ${infoExpandida ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
                                             <div className="border-t border-white/5 pt-4 space-y-3 sm:space-y-4 pb-4">

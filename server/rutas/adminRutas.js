@@ -14,7 +14,9 @@ const {
     listarEventosAdmin,
     obtenerEventoAdmin,
     cambiarEstadoEvento,
+    listarCompras,
 } = require('../controladores/adminControlador');
+const { streamInsights } = require('../controladores/insightsControlador');
 
 // Verifica el rol admin contra la BD, no contra el payload del JWT.
 // Esto evita fallos cuando el rol fue actualizado en BD después del último login.
@@ -37,6 +39,7 @@ const esAdmin = async (req, res, next) => {
 // Dashboard
 router.get('/metricas',           verificarToken, esAdmin, obtenerMetricas);
 router.get('/metricas-dashboard', verificarToken, esAdmin, obtenerMetricasDashboard);
+router.get('/insights/stream',    verificarToken, esAdmin, streamInsights);
 
 // Gestión de usuarios
 router.post('/usuarios',        verificarToken, esAdmin, crearUsuarioAdmin);
@@ -44,6 +47,9 @@ router.get('/usuarios',         verificarToken, esAdmin, listarUsuarios);
 router.get('/usuarios/:id',     verificarToken, esAdmin, obtenerUsuario);
 router.put('/usuarios/:id',     verificarToken, esAdmin, editarUsuario);
 router.delete('/usuarios/:id',  verificarToken, esAdmin, eliminarUsuario);
+
+// Gestión de compras
+router.get('/compras', verificarToken, esAdmin, listarCompras);
 
 // Gestión de eventos
 router.get('/eventos',              verificarToken, esAdmin, listarEventosAdmin);

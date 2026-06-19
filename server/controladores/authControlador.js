@@ -201,6 +201,16 @@ const iniciarSesion = async (req, res) => {
             return res.status(400).json({ mensaje: 'Credenciales inválidas.' });
         }
 
+        // Longitud mínima de contraseña
+        if (passwordSanitizada.length < MIN_PASSWORD_LENGTH) {
+            return res.status(400).json({ mensaje: 'La contraseña debe tener al menos 8 caracteres.' });
+        }
+
+        // Carácter especial obligatorio en contraseña
+        if (!REGEX_CARACTER_ESPECIAL.test(passwordSanitizada)) {
+            return res.status(400).json({ mensaje: 'La contraseña debe contener al menos un carácter especial ($, %, #).' });
+        }
+
         // Retraso progresivo anti brute-force si se superan los intentos fallidos permitidos
         const datosIP = intentosFallidos.get(ip);
         if (datosIP && datosIP.count >= INTENTOS_ANTES_DELAY) {
