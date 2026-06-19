@@ -13,7 +13,7 @@
 
 import React, { useState, useEffect } from 'react';
 import api from '../servicios/api';
-import { MOCK_DASHBOARD, MOCK_ALERTAS } from './dashboard/dashboardData';
+import { MOCK_DASHBOARD } from './dashboard/dashboardData';
 import KpiCard from './dashboard/KpiCard';
 import RevenueChart from './dashboard/RevenueChart';
 import TopEventsChart from './dashboard/TopEventsChart';
@@ -81,7 +81,6 @@ const obtenerFechaFormateada = () => {
 const AdminDashboard = () => {
     const [datos, setDatos] = useState(null);
     const [cargando, setCargando] = useState(true);
-    const [error, setError] = useState('');
     const [usandoMock, setUsandoMock] = useState(false);
 
     useEffect(() => {
@@ -147,20 +146,6 @@ const AdminDashboard = () => {
                 </div>
             </div>
 
-            {/* ── Error banner ─────────────────────────────────────────── */}
-            {error && (
-                <div className="bg-red-500/[0.08] border border-red-500/20 text-red-400 px-4 py-3 text-sm mb-6 flex items-center justify-between gap-4">
-                    <span>{error}</span>
-                    <button
-                        onClick={() => setError('')}
-                        aria-label="Cerrar"
-                        className="text-red-400/50 hover:text-red-400 shrink-0 transition-colors"
-                    >
-                        ✕
-                    </button>
-                </div>
-            )}
-
             {/* ── KPI Cards ───────────────────────────────────────────── */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
                 <KpiCard
@@ -220,10 +205,7 @@ const AdminDashboard = () => {
                     />
                 </div>
                 <div className="min-w-0" style={{ animation: 'fadeSlideIn 0.5s ease 280ms both' }}>
-                    <InsightsPanel
-                        alertas={MOCK_ALERTAS}
-                        cargando={cargando}
-                    />
+                    <InsightsPanel />
                 </div>
             </div>
 

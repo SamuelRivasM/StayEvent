@@ -7,6 +7,7 @@ import OrgDistributionChart from './OrgDistributionChart';
 import OrgAttendanceChart from './OrgAttendanceChart';
 import OrgEventsTable from './OrgEventsTable';
 import OrgActivityFeed from './OrgActivityFeed';
+import InsightsPanel from '../dashboard/InsightsPanel';
 import api from '../../servicios/api';
 
 // ─── Keyframes ────────────────────────────────────────────────────────────────
@@ -251,22 +252,27 @@ const OrganizadorDashboard = () => {
                 <OrgAttendanceChart datos={eficienciaAsistencia || []} cargando={cargando} />
             </div>
 
-            {/* ── Tabla de eventos + Feed ── */}
+            {/* ── Tabla de eventos + Insights ── */}
             <div
-                className="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4"
+                className="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8"
                 style={{ animation: 'fadeSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) 400ms both' }}
             >
                 <div className="lg:col-span-3">
-                    <OrgEventsTable 
-                        datos={eventosActivos || []} 
-                        cargando={cargando} 
+                    <OrgEventsTable
+                        datos={eventosActivos || []}
+                        cargando={cargando}
                         onRegistrarAcceso={handleRegistrarAcceso}
                         cargandoAcceso={cargandoAcceso}
                     />
                 </div>
                 <div className="lg:col-span-2">
-                    <OrgActivityFeed datos={actividadReciente || []} cargando={cargando} />
+                    <InsightsPanel eventos={eventosActivos ?? []} />
                 </div>
+            </div>
+
+            {/* ── Feed de actividad reciente ── */}
+            <div style={{ animation: 'fadeSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) 480ms both' }}>
+                <OrgActivityFeed datos={actividadReciente || []} cargando={cargando} />
             </div>
         </div>
     );
