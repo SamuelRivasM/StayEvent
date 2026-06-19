@@ -1,6 +1,24 @@
 // ─── OrgEventsTable — Tabla "Mis Eventos Activos" (organizador) ───────────────
 
 import React, { useState, useMemo, useCallback } from 'react';
+import BotonExportarCSV from '../../componentes/BotonExportarCSV';
+
+// ─── Columnas y formatos para exportación CSV ─────────────────────────────────
+
+const CSV_COLUMNAS_EVENTOS = {
+    titulo:               'Evento',
+    categoria:            'Categoría',
+    fecha:                'Fecha',
+    estado:               'Estado',
+    entradas_vendidas:    'Entradas Vendidas',
+    capacidad_total:      'Capacidad Total',
+    asistentes_ingresados:'Asistentes Ingresados',
+    ingresos:             'Ingresos (S/)',
+};
+
+const CSV_OPCIONES_EVENTOS = {
+    formatoColumnas: { fecha: 'fecha', ingresos: 'moneda' },
+};
 
 const FILAS_POR_PAGINA = 5;
 
@@ -147,6 +165,12 @@ const OrgEventsTable = ({ datos, cargando, onRegistrarAcceso, cargandoAcceso }) 
                         <h2 className="text-sm font-bold text-white">Mis Eventos</h2>
                         <p className="text-xs text-gray-400 mt-0.5">Estado y métricas de tus eventos activos</p>
                     </div>
+                    <BotonExportarCSV
+                        datos={datos}
+                        columnas={CSV_COLUMNAS_EVENTOS}
+                        nombreArchivo="mis_eventos"
+                        opciones={CSV_OPCIONES_EVENTOS}
+                    />
                 </div>
             </div>
 

@@ -1,6 +1,22 @@
 // ─── OrgActivityFeed — Feed de actividad reciente (organizador) ───────────────
 
 import React from 'react';
+import BotonExportarCSV from '../../componentes/BotonExportarCSV';
+
+// ─── Columnas y formatos para exportación CSV ─────────────────────────────────
+
+const CSV_COLUMNAS_ACTIVIDAD = {
+    tipo:     'Tipo',
+    usuario:  'Usuario',
+    evento:   'Evento',
+    cantidad: 'Cantidad',
+    monto:    'Monto (S/)',
+    fecha:    'Fecha',
+};
+
+const CSV_OPCIONES_ACTIVIDAD = {
+    formatoColumnas: { monto: 'moneda', fecha: 'fecha' },
+};
 
 const formatTiempoRelativo = (fecha) => {
     if (!fecha) return '';
@@ -112,6 +128,13 @@ const OrgActivityFeed = ({ datos, cargando }) => {
                         <h2 className="text-sm font-bold text-white">Actividad Reciente</h2>
                         <p className="text-xs text-gray-400 mt-0.5">Últimas transacciones de tus eventos</p>
                     </div>
+                    <BotonExportarCSV
+                        datos={datos}
+                        columnas={CSV_COLUMNAS_ACTIVIDAD}
+                        nombreArchivo="actividad_organizador"
+                        opciones={CSV_OPCIONES_ACTIVIDAD}
+                        compact
+                    />
                 </div>
             </div>
 
