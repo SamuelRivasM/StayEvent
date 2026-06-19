@@ -351,30 +351,36 @@ const obtenerDashboardOrganizador = async (req, res) => {
 
     try {
         // 1. KPIs
-        // Ingresos totales & Tickets vendidos
-        const [kpiRows] = await pool.query(
-            `SELECT 
-                COALESCE(SUM(c.subtotal), 0) AS ingresos_totales,
-                COALESCE(SUM(c.cantidad), 0) AS tickets_vendidos
-             FROM compras c
-             JOIN eventos e ON c.evento_id = e.id
-             WHERE e.organizador_id = ? AND c.estado = 'confirmado' AND e.eliminado = 0`,
-            [organizadorId]
-        );
-
-        // Capacidad total (stock actual + vendidos)
-        const [stockRows] = await pool.query(
-            `SELECT COALESCE(SUM(z.stock), 0) AS stock_total
-             FROM zonas_evento z
-             JOIN eventos e ON z.evento_id = e.id
-             WHERE e.organizador_id = ? AND e.eliminado = 0 AND z.activo = 1`,
-            [organizadorId]
-        );
-
-        // Check-ins (asistentes)
-        let checkinRows = [{ total_asistentes: 0 }];
+        let ingresosTotales = 0, ticketsVendidos = 0;
         try {
-            [checkinRows] = await pool.query(
+            const [kpiRows] = await pool.query(
+                `SELECT
+                    COALESCE(SUM(c.subtotal), 0) AS ingresos_totales,
+                    COALESCE(SUM(c.cantidad), 0) AS tickets_vendidos
+                 FROM compras c
+                 JOIN eventos e ON c.evento_id = e.id
+                 WHERE e.organizador_id = ? AND c.estado = 'confirmado' AND e.eliminado = 0`,
+                [organizadorId]
+            );
+            ingresosTotales = Number(kpiRows[0].ingresos_totales);
+            ticketsVendidos = Number(kpiRows[0].tickets_vendidos);
+        } catch (e) { logError('Eventos.dashboard.kpi', e); }
+
+        let stockTotal = 0;
+        try {
+            const [stockRows] = await pool.query(
+                `SELECT COALESCE(SUM(z.stock), 0) AS stock_total
+                 FROM zonas_evento z
+                 JOIN eventos e ON z.evento_id = e.id
+                 WHERE e.organizador_id = ? AND e.eliminado = 0`,
+                [organizadorId]
+            );
+            stockTotal = Number(stockRows[0].stock_total);
+        } catch (e) { logError('Eventos.dashboard.stock', e); }
+
+        let totalAsistentes = 0;
+        try {
+            const [checkinRows] = await pool.query(
                 `SELECT COALESCE(SUM(ch.cantidad_personas), 0) AS total_asistentes
                  FROM checkins ch
                  JOIN compras c ON ch.compra_id = c.id
@@ -382,27 +388,23 @@ const obtenerDashboardOrganizador = async (req, res) => {
                  WHERE e.organizador_id = ? AND e.eliminado = 0 AND c.estado = 'confirmado'`,
                 [organizadorId]
             );
-        } catch (e) {
-            logError('Eventos.dashboard.checkins', e);
-        }
+            totalAsistentes = Number(checkinRows[0].total_asistentes);
+        } catch (e) { logError('Eventos.dashboard.checkins', e); }
 
-        // Crecimiento mensual (ingresos últimos 30 días vs anteriores 30 días)
-        const [growthRows] = await pool.query(
-            `SELECT 
-                COALESCE(SUM(CASE WHEN c.fecha_compra >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN c.subtotal ELSE 0 END), 0) AS ingresos_ultimos_30,
-                COALESCE(SUM(CASE WHEN c.fecha_compra >= DATE_SUB(NOW(), INTERVAL 60 DAY) AND c.fecha_compra < DATE_SUB(NOW(), INTERVAL 30 DAY) THEN c.subtotal ELSE 0 END), 0) AS ingresos_previos_30
-             FROM compras c
-             JOIN eventos e ON c.evento_id = e.id
-             WHERE e.organizador_id = ? AND c.estado = 'confirmado' AND e.eliminado = 0`,
-            [organizadorId]
-        );
-
-        const ingresosTotales = Number(kpiRows[0].ingresos_totales);
-        const ticketsVendidos = Number(kpiRows[0].tickets_vendidos);
-        const stockTotal = Number(stockRows[0].stock_total);
-        const totalAsistentes = Number(checkinRows[0].total_asistentes);
-        const ultimos30 = Number(growthRows[0].ingresos_ultimos_30);
-        const previos30 = Number(growthRows[0].ingresos_previos_30);
+        let ultimos30 = 0, previos30 = 0;
+        try {
+            const [growthRows] = await pool.query(
+                `SELECT
+                    COALESCE(SUM(CASE WHEN c.fecha_compra >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN c.subtotal ELSE 0 END), 0) AS ingresos_ultimos_30,
+                    COALESCE(SUM(CASE WHEN c.fecha_compra >= DATE_SUB(NOW(), INTERVAL 60 DAY) AND c.fecha_compra < DATE_SUB(NOW(), INTERVAL 30 DAY) THEN c.subtotal ELSE 0 END), 0) AS ingresos_previos_30
+                 FROM compras c
+                 JOIN eventos e ON c.evento_id = e.id
+                 WHERE e.organizador_id = ? AND c.estado = 'confirmado' AND e.eliminado = 0`,
+                [organizadorId]
+            );
+            ultimos30 = Number(growthRows[0].ingresos_ultimos_30);
+            previos30 = Number(growthRows[0].ingresos_previos_30);
+        } catch (e) { logError('Eventos.dashboard.growth', e); }
 
         const anterior = ingresosTotales - ultimos30 + previos30;
         const crecimiento = previos30 > 0
@@ -431,56 +433,58 @@ const obtenerDashboardOrganizador = async (req, res) => {
         };
 
         // 2. Tendencia de 30 días (ingresos y tickets por día)
-        const [tendenciaRows] = await pool.query(
-            `SELECT 
-                DATE_FORMAT(c.fecha_compra, '%Y-%m-%d') AS dia,
-                COALESCE(SUM(c.subtotal), 0) AS ingresos,
-                COALESCE(SUM(c.cantidad), 0) AS tickets
-             FROM compras c
-             JOIN eventos e ON c.evento_id = e.id
-             WHERE e.organizador_id = ? AND c.estado = 'confirmado' AND e.eliminado = 0
-               AND c.fecha_compra >= DATE_SUB(CURDATE(), INTERVAL 29 DAY)
-             GROUP BY DATE(c.fecha_compra)
-             ORDER BY dia ASC`,
-            [organizadorId]
-        );
-
-        // Llenar los días vacíos en JavaScript para evitar huecos en Recharts
-        const tendencia30dias = [];
-        const hoy = new Date();
-        const diasMapa = new Map(tendenciaRows.map(r => [r.dia, r]));
-
-        for (let i = 29; i >= 0; i--) {
-            const d = new Date(hoy);
-            d.setDate(hoy.getDate() - i);
-            const fechaStr = d.toISOString().slice(0, 10);
-            const diaReg = diasMapa.get(fechaStr);
-            tendencia30dias.push({
-                dia: fechaStr,
-                ingresos: diaReg ? Number(diaReg.ingresos) : 0,
-                tickets: diaReg ? Number(diaReg.tickets) : 0
-            });
-        }
+        let tendencia30dias = [];
+        try {
+            const [tendenciaRows] = await pool.query(
+                `SELECT
+                    DATE_FORMAT(c.fecha_compra, '%Y-%m-%d') AS dia,
+                    COALESCE(SUM(c.subtotal), 0) AS ingresos,
+                    COALESCE(SUM(c.cantidad), 0) AS tickets
+                 FROM compras c
+                 JOIN eventos e ON c.evento_id = e.id
+                 WHERE e.organizador_id = ? AND c.estado = 'confirmado' AND e.eliminado = 0
+                   AND c.fecha_compra >= DATE_SUB(CURDATE(), INTERVAL 29 DAY)
+                 GROUP BY DATE(c.fecha_compra)
+                 ORDER BY dia ASC`,
+                [organizadorId]
+            );
+            const hoy = new Date();
+            const diasMapa = new Map(tendenciaRows.map(r => [r.dia, r]));
+            for (let i = 29; i >= 0; i--) {
+                const d = new Date(hoy);
+                d.setDate(hoy.getDate() - i);
+                const fechaStr = d.toISOString().slice(0, 10);
+                const diaReg = diasMapa.get(fechaStr);
+                tendencia30dias.push({
+                    dia: fechaStr,
+                    ingresos: diaReg ? Number(diaReg.ingresos) : 0,
+                    tickets: diaReg ? Number(diaReg.tickets) : 0
+                });
+            }
+        } catch (e) { logError('Eventos.dashboard.tendencia', e); }
 
         // 3. Distribución por zona
-        const [distribucionRows] = await pool.query(
-            `SELECT 
-                z.nombre AS categoria,
-                COALESCE(SUM(c.cantidad), 0) AS tickets,
-                COALESCE(SUM(c.subtotal), 0) AS ingresos
-             FROM compras c
-             JOIN eventos e ON c.evento_id = e.id
-             JOIN zonas_evento z ON c.zona_id = z.id
-             WHERE e.organizador_id = ? AND c.estado = 'confirmado' AND e.eliminado = 0
-             GROUP BY z.nombre
-             ORDER BY tickets DESC`,
-            [organizadorId]
-        );
-        const distribucionZonas = distribucionRows.map(r => ({
-            categoria: r.categoria,
-            tickets: Number(r.tickets),
-            ingresos: Number(r.ingresos)
-        }));
+        let distribucionZonas = [];
+        try {
+            const [distribucionRows] = await pool.query(
+                `SELECT
+                    z.nombre AS categoria,
+                    COALESCE(SUM(c.cantidad), 0) AS tickets,
+                    COALESCE(SUM(c.subtotal), 0) AS ingresos
+                 FROM compras c
+                 JOIN eventos e ON c.evento_id = e.id
+                 JOIN zonas_evento z ON c.zona_id = z.id
+                 WHERE e.organizador_id = ? AND c.estado = 'confirmado' AND e.eliminado = 0
+                 GROUP BY z.nombre
+                 ORDER BY tickets DESC`,
+                [organizadorId]
+            );
+            distribucionZonas = distribucionRows.map(r => ({
+                categoria: r.categoria,
+                tickets: Number(r.tickets),
+                ingresos: Number(r.ingresos)
+            }));
+        } catch (e) { logError('Eventos.dashboard.distribucion', e); }
 
         // 4. Eficiencia de asistencia por evento
         let eficienciaAsistencia = [];
