@@ -15,6 +15,7 @@ const {
     obtenerEventoAdmin,
     cambiarEstadoEvento,
 } = require('../controladores/adminControlador');
+const { streamInsights } = require('../controladores/insightsControlador');
 
 // Verifica el rol admin contra la BD, no contra el payload del JWT.
 // Esto evita fallos cuando el rol fue actualizado en BD después del último login.
@@ -37,6 +38,7 @@ const esAdmin = async (req, res, next) => {
 // Dashboard
 router.get('/metricas',           verificarToken, esAdmin, obtenerMetricas);
 router.get('/metricas-dashboard', verificarToken, esAdmin, obtenerMetricasDashboard);
+router.get('/insights/stream',    verificarToken, esAdmin, streamInsights);
 
 // Gestión de usuarios
 router.post('/usuarios',        verificarToken, esAdmin, crearUsuarioAdmin);

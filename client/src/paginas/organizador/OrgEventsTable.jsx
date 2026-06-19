@@ -1,6 +1,24 @@
 // ─── OrgEventsTable — Tabla "Mis Eventos Activos" (organizador) ───────────────
 
 import React, { useState, useMemo, useCallback } from 'react';
+import BotonExportarCSV from '../../componentes/BotonExportarCSV';
+
+// ─── Columnas y formatos para exportación CSV ─────────────────────────────────
+
+const CSV_COLUMNAS_EVENTOS = {
+    titulo:               'Evento',
+    categoria:            'Categoría',
+    fecha:                'Fecha',
+    estado:               'Estado',
+    entradas_vendidas:    'Entradas Vendidas',
+    capacidad_total:      'Capacidad Total',
+    asistentes_ingresados:'Asistentes Ingresados',
+    ingresos:             'Ingresos (S/)',
+};
+
+const CSV_OPCIONES_EVENTOS = {
+    formatoColumnas: { fecha: 'fecha', ingresos: 'moneda' },
+};
 
 const FILAS_POR_PAGINA = 5;
 
@@ -37,7 +55,7 @@ const BadgeCategoria = ({ categoria }) => {
         'Fiestas / Discoteca':  'bg-pink-500/10 text-pink-400',
     };
     return (
-        <span className={`inline-block px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-sm ${colors[categoria] || 'bg-gray-500/10 text-gray-400'}`}>
+        <span className={`inline-block px-2 py-0.5 text-xs font-semibold uppercase tracking-wider rounded-sm ${colors[categoria] || 'bg-gray-500/10 text-gray-400'}`}>
             {categoria}
         </span>
     );
@@ -72,7 +90,7 @@ const FilaEvento = React.memo(({ evento, onRegistrarAcceso, cargandoAcceso }) =>
             </td>
             <td className="px-3 py-3.5 hidden md:table-cell">
                 <div className="flex flex-col gap-1 max-w-[120px]">
-                    <div className="flex items-center justify-between text-[10px] text-gray-400">
+                    <div className="flex items-center justify-between text-xs text-gray-400">
                         <span>Ventas: {porcentaje}%</span>
                         <span className="tabular-nums font-semibold text-white">{evento.entradas_vendidas}/{evento.capacidad_total}</span>
                     </div>
@@ -81,7 +99,7 @@ const FilaEvento = React.memo(({ evento, onRegistrarAcceso, cargandoAcceso }) =>
                             style={{ width: `${porcentaje}%` }} />
                     </div>
                     {evento.entradas_vendidas > 0 && (
-                        <span className="text-[10px] text-emerald-400 font-medium whitespace-nowrap">
+                        <span className="text-xs text-emerald-400 font-medium whitespace-nowrap">
                             {evento.asistentes_ingresados} de {evento.entradas_vendidas} ingresaron
                         </span>
                     )}
@@ -95,7 +113,7 @@ const FilaEvento = React.memo(({ evento, onRegistrarAcceso, cargandoAcceso }) =>
                     onClick={() => onRegistrarAcceso(evento.id)}
                     disabled={inhabilitado || estaCargando}
                     title={inhabilitado ? "Todos los asistentes ingresaron" : "Registrar ingreso de asistente"}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm text-[10px] font-bold uppercase tracking-wider transition-all duration-150 ${
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm text-xs font-bold uppercase tracking-wider transition-all duration-150 ${
                         inhabilitado
                             ? 'bg-white/[0.01] text-gray-600 border border-white/[0.03] cursor-not-allowed'
                             : estaCargando
@@ -147,6 +165,12 @@ const OrgEventsTable = ({ datos, cargando, onRegistrarAcceso, cargandoAcceso }) 
                         <h2 className="text-sm font-bold text-white">Mis Eventos</h2>
                         <p className="text-xs text-gray-400 mt-0.5">Estado y métricas de tus eventos activos</p>
                     </div>
+                    <BotonExportarCSV
+                        datos={datos}
+                        columnas={CSV_COLUMNAS_EVENTOS}
+                        nombreArchivo="mis_eventos"
+                        opciones={CSV_OPCIONES_EVENTOS}
+                    />
                 </div>
             </div>
 

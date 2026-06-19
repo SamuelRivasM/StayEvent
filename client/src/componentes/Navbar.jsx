@@ -84,7 +84,7 @@ const Navbar = () => {
                                 )}
                                 {usuario.rol === 'organizador' && (
                                     <Link
-                                        to="/organizador/eventos"
+                                        to="/organizador/dashboard"
                                         className="px-4 py-1.5 text-sm font-medium text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400/50 transition-all duration-200"
                                     >
                                         Gestión Eventos
@@ -197,7 +197,7 @@ const Navbar = () => {
                                 )}
                                 {usuario.rol === 'organizador' && (
                                     <Link
-                                        to="/organizador/eventos"
+                                        to="/organizador/dashboard"
                                         onClick={() => setMenuAbierto(false)}
                                         className="block px-3 py-2 text-sm text-purple-400 hover:text-purple-300 hover:bg-white/5 transition-all"
                                     >
