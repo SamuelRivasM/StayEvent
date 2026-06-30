@@ -221,6 +221,7 @@ const inicializarDB = async () => {
         `);
         // Garantizar columna creado_en si la tabla existía sin ella
         await agregarColumnaSiNoExiste('reservas_temporales', 'creado_en', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+        await agregarColumnaSiNoExiste('reservas_temporales', 'codigo_pago', 'VARCHAR(6) DEFAULT NULL');
         logInfo('DB', 'Tabla reservas_temporales lista.');
     } catch (error) {
         logError('DB.inicializarDB.reservas_temporales', error);
