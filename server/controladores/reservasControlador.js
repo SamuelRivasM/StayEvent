@@ -111,12 +111,13 @@ const crearReserva = async (req, res) => {
         );
 
         const subtotal = Number(zona.precio) * cantidadInt;
+        const codigo_pago = Math.floor(100000 + Math.random() * 900000).toString();
 
         // Insertar reserva temporal
         const [resultado] = await conn.execute(
-            `INSERT INTO reservas_temporales (usuario_id, evento_id, zona_id, cantidad, subtotal, expira_en)
-             VALUES (?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL ? MINUTE))`,
-            [usuario_id, eventoIdInt, zonaIdInt, cantidadInt, subtotal, RESERVA_DURACION_MIN]
+            `INSERT INTO reservas_temporales (usuario_id, evento_id, zona_id, cantidad, subtotal, expira_en, codigo_pago)
+             VALUES (?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL ? MINUTE), ?)`,
+            [usuario_id, eventoIdInt, zonaIdInt, cantidadInt, subtotal, RESERVA_DURACION_MIN, codigo_pago]
         );
 
         // Obtener la fecha de expiración insertada
@@ -134,6 +135,7 @@ const crearReserva = async (req, res) => {
                 subtotal,
                 cantidad:  cantidadInt,
                 expira_en: reservaCreada[0].expira_en,
+                codigo_pago,
             },
         });
     } catch (error) {
@@ -151,6 +153,7 @@ const confirmarReserva = async (req, res) => {
     const reservaId = parseEnteroPositivo(req.params.id);
     if (!reservaId) return res.status(400).json({ mensaje: 'ID de reserva inválido.' });
 
+    const { codigo_pago } = req.body;
     const usuario_id = req.usuario.id;
     const conn = await pool.getConnection();
 
@@ -159,7 +162,7 @@ const confirmarReserva = async (req, res) => {
 
         // Verificar la reserva con bloqueo
         const [reservas] = await conn.execute(
-            `SELECT id, evento_id, zona_id, cantidad, subtotal, expira_en
+            `SELECT id, evento_id, zona_id, cantidad, subtotal, expira_en, codigo_pago
              FROM reservas_temporales
              WHERE id = ? AND usuario_id = ?
              FOR UPDATE`,
@@ -172,6 +175,12 @@ const confirmarReserva = async (req, res) => {
         }
 
         const reserva = reservas[0];
+
+        // Doble validación de pago: Verificar código OTP de pago
+        if (reserva.codigo_pago && (!codigo_pago || String(codigo_pago).trim() !== String(reserva.codigo_pago))) {
+            await conn.rollback();
+            return res.status(400).json({ mensaje: 'Código de verificación de pago (OTP) inválido.' });
+        }
 
         // Verificar que no haya expirado
         if (new Date(reserva.expira_en) < new Date()) {
