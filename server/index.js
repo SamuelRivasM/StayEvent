@@ -8,127 +8,13 @@
 //  - Responsabilidad: IDs de error en cada respuesta 500
 // ─────────────────────────────────────────────────────────────
 
-require('dotenv').config();
-const crypto = require('crypto');
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
 const { testConnection, pool } = require('./config/db');
-const { logError, logInfo, logWarn, generarIdError } = require('./config/logger');
-const { MIN_JWT_SECRET_LENGTH, LIMPIEZA_RESERVAS_MS } = require('./config/constantes');
-const { validacionMiddleware } = require('./middlewares/validacionMiddleware');
-const authRutas = require('./rutas/authRutas');
-const eventosRutas = require('./rutas/eventosRutas');
-const comprasRutas = require('./rutas/comprasRutas');
-const usuariosRutas = require('./rutas/usuariosRutas');
-const adminRutas = require('./rutas/adminRutas');
-const reservasRutas = require('./rutas/reservasRutas');
-const checkinRutas = require('./rutas/checkinRutas');
+const { logError, logInfo, logWarn } = require('./config/logger');
+const { LIMPIEZA_RESERVAS_MS } = require('./config/constantes');
+const app = require('./app');
 
-// Valida que el JWT_SECRET configurado sea seguro y robusto
-
-const validarSecreto = () => {
-    const secret = process.env.JWT_SECRET;
-
-    if (!secret) {
-        logWarn('Seguridad', 'JWT_SECRET no definido. Generando uno temporal (NO apto para producción).');
-        process.env.JWT_SECRET = crypto.randomBytes(32).toString('hex');
-        return;
-    }
-
-    if (secret.length < MIN_JWT_SECRET_LENGTH) {
-        logWarn(
-            'Seguridad',
-            `JWT_SECRET tiene ${secret.length} caracteres. Se recomiendan al menos ${MIN_JWT_SECRET_LENGTH}. `
-            + 'Generar uno seguro: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
-        );
-    }
-
-    if (/stay.?event/i.test(secret)) {
-        logWarn(
-            'Seguridad',
-            'JWT_SECRET contiene el nombre del proyecto, lo que lo hace predecible. Cámbialo por uno aleatorio.'
-        );
-    }
-};
-
-validarSecreto();
-
-// Inicialización de la app de Express
-
-const app = express();
 const PORT = process.env.PORT || 5000;
-
-// Cabeceras de seguridad HTTP
-app.use(helmet());
-
-// CORS: lee el origen desde variables de entorno
-const ORIGENES_PERMITIDOS = (process.env.CORS_ORIGIN || 'http://localhost:3000').split(',').map(o => o.trim());
-
-app.use(cors({
-    origin: (origin, callback) => {
-        if (!origin || ORIGENES_PERMITIDOS.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('CORS: origen no permitido.'));
-        }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-}));
-
-// Límite de body
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true, limit: '10kb' }));
-
-// Rate limit global
-const limitadorGlobal = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 200,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: { mensaje: 'Demasiadas solicitudes. Intenta más tarde.' },
-});
-app.use(limitadorGlobal);
-
-// Validación de entrada global
-app.use(validacionMiddleware);
-
-// Rutas
-app.use('/api/auth', authRutas);
-app.use('/api/eventos', eventosRutas);
-app.use('/api/compras', comprasRutas);
-app.use('/api/usuarios', usuariosRutas);
-app.use('/api/admin', adminRutas);
-app.use('/api/reservas', reservasRutas);
-app.use('/api/checkin', checkinRutas);
-
-// Health check
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'OK', message: 'Stay Event API funcionando' });
-});
-
-// 404
-app.use((req, res) => {
-    res.status(404).json({ mensaje: 'Ruta no encontrada.' });
-});
-
-// Manejo global de errores (oculta detalles y devuelve ID de trazabilidad)
-
-app.use((err, req, res, next) => {
-    if (err.message && err.message.includes('CORS')) {
-        return res.status(403).json({ mensaje: 'Acceso no permitido.' });
-    }
-
-    const idError = logError('ErrorHandler', err);
-    res.status(500).json({
-        mensaje: 'Error interno del servidor.',
-        referencia: idError,
-    });
-});
 
 // Whitelist de columnas para ALTER TABLE (previene inyección SQL)
 
@@ -219,7 +105,6 @@ const inicializarDB = async () => {
                 FOREIGN KEY (zona_id) REFERENCES zonas_evento(id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
-        // Garantizar columna creado_en si la tabla existía sin ella
         await agregarColumnaSiNoExiste('reservas_temporales', 'creado_en', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
         logInfo('DB', 'Tabla reservas_temporales lista.');
     } catch (error) {
@@ -276,7 +161,6 @@ const verificarPasswordAdmin = async () => {
             );
         }
     } catch (error) {
-        // No bloquear el arranque por este check
         logError('Seguridad.verificarPasswordAdmin', error);
     }
 };
@@ -289,13 +173,11 @@ const limpiarReservasExpiradas = async () => {
         conn = await pool.getConnection();
         await conn.beginTransaction();
 
-        // Buscar reservas expiradas
         const [expiradas] = await conn.execute(
             'SELECT id, zona_id, cantidad FROM reservas_temporales WHERE expira_en < NOW()'
         );
 
         if (expiradas.length > 0) {
-            // Restaurar stock de cada reserva expirada
             for (const reserva of expiradas) {
                 await conn.execute(
                     'UPDATE zonas_evento SET stock = stock + ? WHERE id = ?',
@@ -303,7 +185,6 @@ const limpiarReservasExpiradas = async () => {
                 );
             }
 
-            // Eliminar todas las reservas expiradas
             await conn.execute('DELETE FROM reservas_temporales WHERE expira_en < NOW()');
 
             await conn.commit();
@@ -327,7 +208,6 @@ app.listen(PORT, async () => {
     await inicializarDB();
     await verificarPasswordAdmin();
 
-    // Iniciar job de limpieza de reservas expiradas
     setInterval(limpiarReservasExpiradas, LIMPIEZA_RESERVAS_MS);
     logInfo('Reservas', `Job de limpieza activo (cada ${LIMPIEZA_RESERVAS_MS / 1000}s).`);
 });
