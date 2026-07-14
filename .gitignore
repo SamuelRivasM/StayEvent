@@ -3,6 +3,12 @@ node_modules/
 client/node_modules/
 server/node_modules/
 
+# Ignorar todos los archivos Markdown
+*.md
+
+# Excepto el README.md
+!README.md
+
 # Environment variables
 .env
 .env.local
