@@ -3,7 +3,7 @@ import { check, sleep } from 'k6';
 
 /*
   Escenario usuarios entrar a la página principal y luego /eventos
-  Carga Progresiva de 10 a 45 usuarios 
+  Carga Progresiva de 10 a 20 usuarios 
  */
 
 export const options = {
