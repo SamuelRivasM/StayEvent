@@ -61,12 +61,35 @@ const OrganizadorDashboard = () => {
     const [datos, setDatos] = useState(null);
     const [notificacion, setNotificacion] = useState(null);
     const [cargandoAcceso, setCargandoAcceso] = useState(null);
+    const [exportandoCSV, setExportandoCSV] = useState(false);
 
-    const cargarDatos = async (mostrarLoader = true) => {
+    const [filtroMes, setFiltroMes] = useState('');
+    const [filtroAnio, setFiltroAnio] = useState('');
+    const [filtroCategoria, setFiltroCategoria] = useState('');
+    const [filtroEstadoEvento, setFiltroEstadoEvento] = useState('');
+    const [filtroEvento, setFiltroEvento] = useState('');
+
+    const [listaMisEventos, setListaMisEventos] = useState([]);
+
+    const cargarDatos = async (mostrarLoader = true, filtros = {}) => {
         if (mostrarLoader) setCargando(true);
         try {
-            const respuesta = await api.get('/eventos/dashboard-organizador');
+            const respuesta = await api.get('/eventos/dashboard-organizador', { params: filtros });
             setDatos(respuesta.data);
+
+            // Corrección de filtros inconsistentes en cascada
+            const valid = respuesta.data?.filtrosValidos;
+            if (valid) {
+                if (filtroMes && valid.meses && !valid.meses.includes(Number(filtroMes))) {
+                    setFiltroMes('');
+                }
+                if (filtroCategoria && valid.categorias && !valid.categorias.includes(filtroCategoria)) {
+                    setFiltroCategoria('');
+                }
+                if (filtroEvento && valid.eventos && !valid.eventos.some(e => String(e.id) === String(filtroEvento))) {
+                    setFiltroEvento('');
+                }
+            }
         } catch (err) {
             console.error('Error al cargar datos del dashboard:', err);
             setNotificacion({
@@ -79,8 +102,71 @@ const OrganizadorDashboard = () => {
     };
 
     useEffect(() => {
-        cargarDatos(true);
+        const cargarMisEventos = async () => {
+            try {
+                const res = await api.get('/eventos/mis-eventos');
+                setListaMisEventos(res.data?.eventos || []);
+            } catch (err) {
+                console.error('[OrganizadorDashboard] Error al cargar la lista de sus eventos:', err);
+            }
+        };
+        cargarMisEventos();
     }, []);
+
+    // Carga de datos automatizada al modificar cualquier filtro
+    useEffect(() => {
+        const filtros = {};
+        if (filtroMes) filtros.mes = filtroMes;
+        if (filtroAnio) filtros.anio = filtroAnio;
+        if (filtroCategoria) filtros.categoria = filtroCategoria;
+        if (filtroEstadoEvento) filtros.estadoEvento = filtroEstadoEvento;
+        if (filtroEvento) filtros.eventoId = filtroEvento;
+        cargarDatos(true, filtros);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filtroMes, filtroAnio, filtroCategoria, filtroEstadoEvento, filtroEvento]);
+
+    const manejarFiltrar = (e) => {
+        if (e) e.preventDefault();
+    };
+
+    const manejarLimpiar = () => {
+        setFiltroMes('');
+        setFiltroAnio('');
+        setFiltroCategoria('');
+        setFiltroEstadoEvento('');
+        setFiltroEvento('');
+    };
+
+    const manejarExportarCSV = async () => {
+        setExportandoCSV(true);
+        try {
+            const params = {};
+            if (filtroMes) params.mes = filtroMes;
+            if (filtroAnio) params.anio = filtroAnio;
+            if (filtroCategoria) params.categoria = filtroCategoria;
+            if (filtroEstadoEvento) params.estadoEvento = filtroEstadoEvento;
+            if (filtroEvento) params.eventoId = filtroEvento;
+
+            const respuesta = await api.get('/compras/export-csv', {
+                params,
+                responseType: 'blob'
+            });
+
+            const blob = new Blob([respuesta.data], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `reporte_organizador_${new Date().toISOString().slice(0, 10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Error al exportar CSV:', err);
+        } finally {
+            setExportandoCSV(false);
+        }
+    };
 
     const handleRegistrarAcceso = async (eventoId) => {
         setCargandoAcceso(eventoId);
@@ -93,8 +179,14 @@ const OrganizadorDashboard = () => {
             });
             // Auto-ocultar notificación
             setTimeout(() => setNotificacion(null), 6000);
-            // Recargar datos sin mostrar spinner global
-            await cargarDatos(false);
+            // Recargar datos sin mostrar spinner global, preservando filtros activos
+            const filtros = {};
+            if (filtroMes) filtros.mes = filtroMes;
+            if (filtroAnio) filtros.anio = filtroAnio;
+            if (filtroCategoria) filtros.categoria = filtroCategoria;
+            if (filtroEstadoEvento) filtros.estadoEvento = filtroEstadoEvento;
+            if (filtroEvento) filtros.eventoId = filtroEvento;
+            await cargarDatos(false, filtros);
         } catch (err) {
             console.error('Error al registrar acceso:', err);
             setNotificacion({
@@ -108,6 +200,17 @@ const OrganizadorDashboard = () => {
     };
 
     const { kpis, tendencia30dias, distribucionZonas, eficienciaAsistencia, eventosActivos, actividadReciente } = datos || {};
+
+    const NOMBRES_MESES = {
+        1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril', 5: 'Mayo', 6: 'Junio',
+        7: 'Julio', 8: 'Agosto', 9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+    };
+
+    const filtrosValidos = datos?.filtrosValidos || {};
+    const aniosDisponibles = filtrosValidos.anios || [2025, 2026, 2027, 2028];
+    const mesesDisponibles = filtrosValidos.meses || [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    const categoriasDisponibles = filtrosValidos.categorias || ['Conciertos', 'Festivales', 'Fiestas / Discoteca'];
+    const eventosDisponibles = filtrosValidos.eventos || listaMisEventos;
 
     const fechaHoy = new Date().toLocaleDateString('es-PE', {
         weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
@@ -186,6 +289,152 @@ const OrganizadorDashboard = () => {
                     )}
                 </div>
             </div>
+
+            {/* ── Barra de Filtros Premium ── */}
+            <div className="mb-6 p-4 bg-gray-900/50 border border-gray-800 rounded-xl backdrop-blur-sm shadow-lg animate-[fadeSlideIn_0.4s_cubic-bezier(0.4,0,0.2,1)_100ms_both]">
+                <form onSubmit={manejarFiltrar} className="space-y-4">
+                    {/* Fila 1: Filtros Temporales y Categorías */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="min-w-0">
+                            <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Año</label>
+                            <div className="relative">
+                                <select
+                                    value={filtroAnio}
+                                    onChange={(e) => setFiltroAnio(e.target.value)}
+                                    className="w-full pl-3 pr-10 py-2 bg-gray-800/80 border border-gray-700 hover:border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 text-white rounded-lg text-sm focus:outline-none transition-all duration-200 appearance-none max-w-full truncate"
+                                >
+                                    <option value="">Todos los años</option>
+                                    {aniosDisponibles.map(y => (
+                                        <option key={y} value={y}>{y}</option>
+                                    ))}
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="min-w-0">
+                            <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Mes</label>
+                            <div className="relative">
+                                <select
+                                    value={filtroMes}
+                                    onChange={(e) => setFiltroMes(e.target.value)}
+                                    className="w-full pl-3 pr-10 py-2 bg-gray-800/80 border border-gray-700 hover:border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 text-white rounded-lg text-sm focus:outline-none transition-all duration-200 appearance-none max-w-full truncate"
+                                >
+                                    <option value="">Todos los meses</option>
+                                    {mesesDisponibles.map(m => (
+                                        <option key={m} value={m}>{NOMBRES_MESES[m] || m}</option>
+                                    ))}
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="min-w-0">
+                            <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Tipo de Evento</label>
+                            <div className="relative">
+                                <select
+                                    value={filtroCategoria}
+                                    onChange={(e) => setFiltroCategoria(e.target.value)}
+                                    className="w-full pl-3 pr-10 py-2 bg-gray-800/80 border border-gray-700 hover:border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 text-white rounded-lg text-sm focus:outline-none transition-all duration-200 appearance-none max-w-full truncate"
+                                >
+                                    <option value="">Todos los tipos</option>
+                                    {categoriasDisponibles.map(cat => (
+                                        <option key={cat} value={cat}>{cat}</option>
+                                    ))}
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="min-w-0">
+                            <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Estado Evento</label>
+                            <div className="relative">
+                                <select
+                                    value={filtroEstadoEvento}
+                                    onChange={(e) => setFiltroEstadoEvento(e.target.value)}
+                                    className="w-full pl-3 pr-10 py-2 bg-gray-800/80 border border-gray-700 hover:border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 text-white rounded-lg text-sm focus:outline-none transition-all duration-200 appearance-none max-w-full truncate"
+                                >
+                                    <option value="">Todos los estados</option>
+                                    <option value="activo">Activos</option>
+                                    <option value="inactivo">Inactivos</option>
+                                    <option value="agotado">Agotados</option>
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Fila 2: Filtros de Selección Específica y Botones */}
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                        <div className="min-w-0 md:col-span-8">
+                            <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Mi Evento</label>
+                            <div className="relative">
+                                <select
+                                    value={filtroEvento}
+                                    onChange={(e) => setFiltroEvento(e.target.value)}
+                                    className="w-full pl-3 pr-10 py-2 bg-gray-800/80 border border-gray-700 hover:border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 text-white rounded-lg text-sm focus:outline-none transition-all duration-200 appearance-none max-w-full truncate"
+                                >
+                                    <option value="">Todos mis eventos</option>
+                                    {eventosDisponibles.map((ev) => (
+                                        <option key={ev.id} value={ev.id}>{ev.titulo}</option>
+                                    ))}
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="md:col-span-4 flex gap-2 justify-end">
+                            <button
+                                type="button"
+                                onClick={manejarLimpiar}
+                                className="flex-1 py-2 px-3 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-sm font-semibold rounded-lg border border-gray-700 hover:border-gray-600 transition-all duration-200 shadow-md"
+                            >
+                                Limpiar Filtros
+                            </button>
+                            <button
+                                type="button"
+                                onClick={manejarExportarCSV}
+                                disabled={exportandoCSV || (eventosActivos?.length === 0)}
+                                className="flex-1 py-2 px-3 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-lg shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                {exportandoCSV ? 'Exportando…' : 'Descargar CSV'}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            {/* ── Alerta de Datos Vacíos / Sin Eventos ── */}
+            {!cargando && datos && (eventosActivos?.length === 0) && (
+                <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 text-amber-200 rounded-xl flex items-center gap-3 shadow-md animate-[fadeSlideIn_0.3s_ease_both]">
+                    <svg className="w-5 h-5 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                        <p className="text-sm font-semibold">Sin eventos registrados</p>
+                        <p className="text-xs text-amber-300/80 mt-0.5">No se encontraron eventos propios ni ventas que coincidan con los filtros seleccionados en este período.</p>
+                    </div>
+                </div>
+            )}
 
             {/* ── KPI Cards ── */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">

@@ -62,6 +62,12 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
     const [errorCompra, setErrorCompra] = useState('');
     const [codigoIngreso, setCodigoIngreso] = useState('');
 
+    // Doble validación de pago (OTP / StaySecure)
+    const [otpEnviado, setOtpEnviado] = useState('');
+    const [mostrarOtpModal, setMostrarOtpModal] = useState(false);
+    const [otpIngresado, setOtpIngresado] = useState('');
+    const [errorOtp, setErrorOtp] = useState('');
+
     // ── Estado de reserva temporal (Ticket Holding) ──
     const [reservaId, setReservaId] = useState(null);
     const [tiempoRestante, setTiempoRestante] = useState(0);
@@ -219,6 +225,7 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
             });
             const { reserva } = resp.data;
             setReservaId(reserva.id);
+            setOtpEnviado(reserva.codigo_pago);
             setReservaExpirada(false);
 
             // Calcular segundos restantes
@@ -295,20 +302,43 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
             setErroresPago(errors);
             return;
         }
+
+        setMostrarOtpModal(true);
+        setOtpIngresado('');
+        setErrorOtp('');
+    }, [validarFormularioPago, reservaId, reservaExpirada]);
+
+    const ejecutarCompraConfirmada = useCallback(async (e) => {
+        if (e) e.preventDefault();
+
+        if (reservaExpirada || !reservaId) {
+            setErrorOtp('Tu reserva ha expirado.');
+            return;
+        }
+
+        if (!otpIngresado || otpIngresado.trim().length !== 6) {
+            setErrorOtp('Ingresa un código de 6 dígitos.');
+            return;
+        }
+
         setProcesando(true);
+        setErrorOtp('');
         setErrorCompra('');
         try {
-            const resp = await api.post(`/reservas/${reservaId}/confirmar`);
+            const resp = await api.post(`/reservas/${reservaId}/confirmar`, {
+                codigo_pago: otpIngresado
+            });
             setCodigoIngreso(resp.data.codigo_ingreso);
             setConfirmado(true);
+            setMostrarOtpModal(false);
             sessionStorage.removeItem(SESSION_KEY);
         } catch (err) {
             const msg = err.response?.data?.mensaje || 'Error al procesar la compra. Intenta nuevamente.';
-            setErrorCompra(msg);
+            setErrorOtp(msg);
         } finally {
             setProcesando(false);
         }
-    }, [validarFormularioPago, reservaId, reservaExpirada]);
+    }, [reservaId, reservaExpirada, otpIngresado]);
 
     const { evento, zonas, isSoldOut } = datos || {};
 
@@ -782,6 +812,72 @@ const ModalCompraTickets = ({ eventoId, onCerrar, seleccionInicial }) => {
                             </div>
                         )}
                     </>
+                )}
+
+                {/* ── Modal de Doble Validación (OTP - StaySecure) ── */}
+                {mostrarOtpModal && (
+                    <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/90 p-4 backdrop-blur-md animate-[fadeIn_0.2s_ease_both]">
+                        <div className="w-full max-w-sm bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-2xl relative overflow-hidden">
+                            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(168,85,247,0.1),transparent_50%)] pointer-events-none" />
+                            
+                            <div className="flex flex-col items-center text-center">
+                                {/* Icono de Candado */}
+                                <div className="w-12 h-12 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-4">
+                                    <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                </div>
+                                
+                                <h3 className="font-display text-lg font-bold text-white mb-2">Verificación de Pago (3D Secure)</h3>
+                                <p className="text-xs text-gray-400 mb-4 leading-relaxed">
+                                    Para autorizar la transacción de <span className="text-white font-semibold">{subtotalFmt}</span>, ingresa el código OTP de 6 dígitos que enviamos a tu correo.
+                                </p>
+
+                                {/* Banner del simulador OTP */}
+                                <div className="w-full bg-purple-950/20 border border-purple-500/20 px-3 py-2 rounded-lg text-left mb-4">
+                                    <p className="text-[10px] uppercase font-bold tracking-wider text-purple-400 leading-none mb-1">[StaySecure Simulator]</p>
+                                    <p className="text-xs text-gray-300">Tu código temporal es: <span className="font-mono font-bold text-white tracking-widest">{otpEnviado}</span></p>
+                                </div>
+
+                                <form onSubmit={ejecutarCompraConfirmada} className="w-full space-y-4">
+                                    <div>
+                                        <input
+                                            type="text"
+                                            maxLength={6}
+                                            value={otpIngresado}
+                                            onChange={(e) => {
+                                                setOtpIngresado(e.target.value.replace(/\D/g, '').slice(0, 6));
+                                                setErrorOtp('');
+                                            }}
+                                            placeholder="000 000"
+                                            className="w-full text-center tracking-[0.4em] font-mono text-lg py-2.5 bg-white/5 border border-white/10 text-white focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors"
+                                        />
+                                        {errorOtp && <p className="text-xs text-red-400 mt-1">{errorOtp}</p>}
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setMostrarOtpModal(false);
+                                                setProcesando(false);
+                                            }}
+                                            className="flex-1 py-2.5 px-4 border border-white/10 text-gray-300 text-sm font-semibold hover:bg-white/5 hover:text-white transition-colors duration-150"
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={procesando}
+                                            className="flex-1 py-2.5 px-4 bg-white text-gray-950 text-sm font-semibold hover:bg-gray-100 active:bg-gray-200 transition-colors duration-150 disabled:opacity-60"
+                                        >
+                                            {procesando ? 'Confirmando…' : 'Validar y Pagar'}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                 )}
             </div>
         </div>
