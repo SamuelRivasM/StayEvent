@@ -1,0 +1,8 @@
+Coloca aqui el archivo stay_event.sql (dump de phpMyAdmin) para que
+docker-compose inicialice la base de datos local con datos de prueba.
+
+Este archivo NO esta en el repo (contiene emails/telefonos/hashes de
+cuentas de prueba del equipo). Pidelo por el chat del equipo.
+
+Sin este archivo, el contenedor de MySQL arrancara vacio (sin tablas
+base como usuarios, eventos, zonas_evento, compras).

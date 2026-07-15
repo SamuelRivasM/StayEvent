@@ -14,6 +14,9 @@ server/node_modules/
 .env.local
 .env.*.local
 
+# Dump de base de datos local (contiene datos personales de prueba)
+db/init/*.sql
+
 # Logs
 npm-debug.log*
 yarn-debug.log*
