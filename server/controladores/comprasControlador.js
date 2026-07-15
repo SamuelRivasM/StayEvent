@@ -138,5 +138,144 @@ const obtenerMisTickets = async (req, res) => {
     }
 };
 
-module.exports = { crearCompra, obtenerMisTickets };
+const exportarComprasCSV = async (req, res) => {
+    let baseSql = `
+        FROM compras c
+        JOIN usuarios u ON c.usuario_id = u.id
+        JOIN eventos e ON c.evento_id = e.id
+        JOIN zonas_evento z ON c.zona_id = z.id
+    `;
+    let conditions = [];
+    let params = [];
+
+    // Security check: if the user is an organizer, we FORCE the restriction e.organizador_id = user_id
+    if (req.usuario.role === 'organizador' || req.usuario.rol === 'organizador') {
+        conditions.push("e.organizador_id = ?");
+        params.push(req.usuario.id);
+    } else if (req.usuario.role === 'admin' || req.usuario.rol === 'admin') {
+        // Admin can filter by any organizer
+        if (req.query.organizadorId) {
+            conditions.push("e.organizador_id = ?");
+            params.push(parseInt(req.query.organizadorId, 10));
+        }
+    } else {
+        return res.status(403).json({ mensaje: 'Acceso denegado.' });
+    }
+
+    // Dynamic filters
+    if (req.query.anio) {
+        conditions.push("YEAR(c.fecha_compra) = ?");
+        params.push(parseInt(req.query.anio, 10));
+    }
+    if (req.query.mes) {
+        conditions.push("MONTH(c.fecha_compra) = ?");
+        params.push(parseInt(req.query.mes, 10));
+    }
+    if (req.query.categoria) {
+        conditions.push("e.categoria = ?");
+        params.push(req.query.categoria);
+    }
+    if (req.query.eventoId) {
+        conditions.push("c.evento_id = ?");
+        params.push(parseInt(req.query.eventoId, 10));
+    }
+    if (req.query.estadoEvento) {
+        const estado = req.query.estadoEvento;
+        if (estado === 'activo') {
+            conditions.push("e.activo = 1");
+        } else if (estado === 'inactivo') {
+            conditions.push("e.activo = 0");
+        } else if (estado === 'agotado') {
+            conditions.push("(SELECT COALESCE(SUM(ze.stock), 0) FROM zonas_evento ze WHERE ze.evento_id = e.id) = 0");
+        }
+    }
+
+    const whereClause = conditions.length > 0 ? " WHERE " + conditions.join(" AND ") : "";
+
+    try {
+        // 1. Obtener conteo total para controlar el bucle de lotes (chunks)
+        const countSql = `SELECT COUNT(*) AS total ${baseSql} ${whereClause}`;
+        const [countRows] = await pool.query(countSql, params);
+        const totalRegistros = countRows[0].total;
+
+        // Configurar cabeceras de respuesta para descarga de archivo
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename=reporte_ventas_${new Date().toISOString().slice(0, 10)}.csv`);
+        
+        // Escribir BOM UTF-8 para soporte de caracteres especiales en Excel
+        res.write('\uFEFF');
+        
+        // Escribir cabecera del CSV
+        res.write('ID,Fecha,Cliente,Email,Evento,Categoria,Zona,Cantidad,Monto (S/),Estado,Codigo Ingreso\n');
+
+        if (totalRegistros === 0) {
+            return res.end();
+        }
+
+        const CHUNK_SIZE = 500;
+        const querySql = `
+            SELECT c.id, c.fecha_compra, c.cantidad, c.subtotal, c.estado, c.codigo_ingreso,
+                   u.nombre AS usuario_nombre, u.apellido AS usuario_apellido, u.email AS usuario_email,
+                   e.titulo AS evento_titulo, e.categoria AS evento_categoria,
+                   z.nombre AS zona_nombre
+            ${baseSql}
+            ${whereClause}
+            ORDER BY c.fecha_compra DESC
+            LIMIT ? OFFSET ?
+        `;
+
+        const escaparCSV = (val) => {
+            if (val === null || val === undefined) return '';
+            let str = String(val);
+            if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+                str = '"' + str.replace(/"/g, '""') + '"';
+            }
+            return str;
+        };
+
+        for (let offset = 0; offset < totalRegistros; offset += CHUNK_SIZE) {
+            // Ejecutar consulta por lote (pasar parámetros limpios)
+            const [rows] = await pool.query(querySql, [...params, CHUNK_SIZE, offset]);
+            
+            let chunkContent = '';
+            for (const row of rows) {
+                const fechaFmt = new Date(row.fecha_compra).toLocaleString('es-PE', {
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit'
+                });
+                const clienteNombre = `${row.usuario_nombre} ${row.usuario_apellido}`;
+                
+                chunkContent += [
+                    row.id,
+                    escaparCSV(fechaFmt),
+                    escaparCSV(clienteNombre),
+                    escaparCSV(row.usuario_email),
+                    escaparCSV(row.evento_titulo),
+                    escaparCSV(row.evento_categoria),
+                    escaparCSV(row.zona_nombre),
+                    row.cantidad,
+                    Number(row.subtotal).toFixed(2),
+                    escaparCSV(row.estado),
+                    escaparCSV(row.codigo_ingreso)
+                ].join(',') + '\n';
+            }
+            
+            // Escribir el lote actual en el response stream
+            res.write(chunkContent);
+        }
+
+        // Finalizar el response stream
+        res.end();
+    } catch (error) {
+        const idError = logError('Compras.exportarComprasCSV', error);
+        // Si no se han enviado cabeceras, devolver error 500
+        if (!res.headersSent) {
+            res.status(500).json({ mensaje: 'Error al exportar los datos.', referencia: idError });
+        } else {
+            res.end();
+        }
+    }
+};
+
+module.exports = { crearCompra, obtenerMisTickets, exportarComprasCSV };
 
