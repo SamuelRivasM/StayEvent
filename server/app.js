@@ -1,5 +1,6 @@
 require('dotenv').config();
 const crypto = require('crypto');
+const os = require('os');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -45,7 +46,14 @@ validarSecreto();
 const app = express();
 app.set('trust proxy', 1);
 
+const INSTANCE_ID = process.env.INSTANCE_ID || os.hostname();
+
 app.use(helmet());
+
+app.use((req, res, next) => {
+    res.set('X-Instance-Id', INSTANCE_ID);
+    next();
+});
 
 const ORIGENES_PERMITIDOS = (process.env.CORS_ORIGIN || 'http://localhost:3000').split(',').map(o => o.trim());
 
@@ -87,7 +95,13 @@ app.use('/api/reservas', reservasRutas);
 app.use('/api/checkin', checkinRutas);
 
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'OK', message: 'Stay Event API funcionando' });
+    res.json({
+        status: 'OK',
+        message: 'Stay Event API funcionando',
+        instancia: INSTANCE_ID,
+        hostname: os.hostname(),
+        pid: process.pid,
+    });
 });
 
 app.use((req, res) => {

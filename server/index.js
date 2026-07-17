@@ -209,6 +209,10 @@ app.listen(PORT, async () => {
     await inicializarDB();
     await verificarPasswordAdmin();
 
-    setInterval(limpiarReservasExpiradas, LIMPIEZA_RESERVAS_MS);
-    logInfo('Reservas', `Job de limpieza activo (cada ${LIMPIEZA_RESERVAS_MS / 1000}s).`);
+    if (process.env.RUN_CRON_JOBS !== 'false') {
+        setInterval(limpiarReservasExpiradas, LIMPIEZA_RESERVAS_MS);
+        logInfo('Reservas', `Job de limpieza activo (cada ${LIMPIEZA_RESERVAS_MS / 1000}s).`);
+    } else {
+        logInfo('Reservas', 'Job de limpieza deshabilitado en esta instancia (RUN_CRON_JOBS=false).');
+    }
 });

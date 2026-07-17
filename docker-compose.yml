@@ -23,6 +23,7 @@ services:
     build: ./server
     container_name: stayevent-server
     restart: unless-stopped
+    command: npm run dev
     depends_on:
       db:
         condition: service_healthy

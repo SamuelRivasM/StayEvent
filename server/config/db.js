@@ -22,7 +22,7 @@ const pool = mysql.createPool({
 const testConnection = async () => {
     try {
         const conn = await pool.getConnection();
-        console.log('[INFO] DB: Conectado con éxito a Railway MySQL');
+        console.log('[INFO] DB: Conectado con éxito a MySQL');
         conn.release();
     } catch (error) {
         console.error('Error de conexión a MySQL:', error.message);
