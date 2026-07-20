@@ -18,14 +18,31 @@ Plataforma web de compra y venta de entradas para eventos. Permite a usuarios re
 - Tailwind CSS 3
 - Axios
 
+**Infraestructura y pruebas**
+- Docker
+- DigitalOcean (servidores, balanceador de carga, monitoreo)
+- k6 (pruebas de carga y estrés)
+
+---
+
+## Roles del sistema
+
+| Rol | Ruta tras el login |
+|---|---|
+| `admin` | `/admin` |
+| `usuario` | `/usuario` |
+| `organizador` | `/organizador` |
+
+Los roles se asignan directamente en la base de datos. El registro público siempre crea usuarios con rol `usuario`.
+
 ---
 
 ## Requisitos previos
 
 - Node.js 18 o superior
 - XAMPP con MySQL activo
+- Docker Desktop (Requiere tener virtualización activada en el equipo)
 - Base de datos `stay_event` creada en MySQL
-- Tabla `usuarios` creada (ver estructura más abajo)
 
 ---
 
@@ -34,229 +51,12 @@ Plataforma web de compra y venta de entradas para eventos. Permite a usuarios re
 ```
 stay-event/
 ├── server/          # Backend — Node.js + Express
-└── client/          # Frontend — React
+├── client/          # Frontend — React
+├── db/              # Script de inicialización de la base de datos
+├── test/            # Pruebas unitarias del backend
+├── pruebas-k6/      # Scripts y reportes de pruebas de carga
+└── docker-compose.yml
 ```
-
----
-
-## Configuración del entorno
-
-Crear el archivo `.env` dentro de `server/` con el siguiente contenido:
-
-```
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=
-DB_NAME=stay_event
-DB_PORT=3306
-
-JWT_SECRET=reemplazar_con_clave_secreta_segura
-JWT_EXPIRES_IN=7d
-
-PORT=5000
-```
-
-> En producción, reemplazar `JWT_SECRET` por una cadena larga y aleatoria. Nunca exponer este archivo en el repositorio.
-
----
-
-## Base de datos
-
-Ejecutar en MySQL (phpMyAdmin o consola):
-
-```sql
--- ============================================
---  Stay Event - Base de Datos
---  Ejecutar en phpMyAdmin (XAMPP)
--- ============================================
-
-CREATE DATABASE IF NOT EXISTS stay_event
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
-
-USE stay_event;
-
--- ============================================
--- TABLA USUARIOS
--- ============================================
-
-CREATE TABLE IF NOT EXISTS usuarios (
-  id          INT AUTO_INCREMENT PRIMARY KEY,
-  nombre      VARCHAR(100)  NOT NULL,
-  apellido    VARCHAR(100)  NOT NULL,
-  email       VARCHAR(150)  NOT NULL UNIQUE,
-  password    VARCHAR(255)  NOT NULL,
-  telefono    VARCHAR(20)   DEFAULT NULL,
-  rol         ENUM('usuario', 'organizador', 'admin') DEFAULT 'usuario',
-  created_at  TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
-  updated_at  TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
--- Índice para búsquedas por email
-CREATE INDEX idx_email ON usuarios(email);
-
--- ============================================
--- TABLA EVENTOS
--- ============================================
-
-CREATE TABLE IF NOT EXISTS eventos (
-  id            INT AUTO_INCREMENT PRIMARY KEY,
-  
-  titulo        VARCHAR(150) NOT NULL,
-  
-  descripcion   TEXT,
-  
-  categoria     ENUM(
-                    'Conciertos',
-                    'Festivales',
-                    'Fiestas / Discoteca'
-                  ) NOT NULL,
-
-  fecha         DATE NOT NULL,
-
-  hora          TIME NOT NULL,
-
-  lugar         VARCHAR(150) NOT NULL,
-
-  distrito      VARCHAR(100) NOT NULL,
-
-  direccion     VARCHAR(255),
-
-  precio        DECIMAL(10,2) NOT NULL DEFAULT 0,
-
-  imagen        VARCHAR(255),
-
-  stock         INT DEFAULT 0,
-
-  estado        ENUM('activo', 'agotado', 'cancelado')
-                 DEFAULT 'activo',
-
-  created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-  updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                 ON UPDATE CURRENT_TIMESTAMP
-);
-
--- ============================================
--- ÍNDICES EVENTOS
--- ============================================
-
-CREATE INDEX idx_categoria ON eventos(categoria);
-
-CREATE INDEX idx_fecha ON eventos(fecha);
-
-CREATE INDEX idx_distrito ON eventos(distrito);
-
--- ============================================
--- USUARIO ADMIN DE PRUEBA
--- Password: admin123
--- ============================================
-
-INSERT INTO usuarios (
-  nombre,
-  apellido,
-  email,
-  password,
-  rol
-)
-VALUES (
-  'Admin',
-  'Stay Event',
-  'admin@stayevent.com',
-  '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK1.',
-  'admin'
-);
-
--- ============================================
--- EVENTOS DE EJEMPLO
--- ============================================
-
-INSERT INTO eventos (
-  titulo,
-  descripcion,
-  categoria,
-  fecha,
-  hora,
-  lugar,
-  distrito,
-  direccion,
-  precio,
-  imagen,
-  stock
-)
-VALUES
-
-(
-  'Coldplay Music Of The Spheres',
-  'Concierto oficial de Coldplay en Lima.',
-  'Conciertos',
-  '2026-05-15',
-  '20:00:00',
-  'Estadio Nacional',
-  'Cercado de Lima',
-  'Av. Paseo de la Republica',
-  250.00,
-  'https://images.unsplash.com/photo-1501386761578-eac5c94b800a',
-  500
-),
-
-(
-  'Tomorrowland Peru',
-  'Festival internacional de musica electronica.',
-  'Festivales',
-  '2026-08-10',
-  '18:00:00',
-  'Costa Verde',
-  'Miraflores',
-  'Circuito de Playas',
-  450.00,
-  'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f',
-  1200
-),
-
-(
-  'Halloween Party Lima',
-  'Fiesta tematica con DJs invitados.',
-  'Fiestas / Discoteca',
-  '2026-10-31',
-  '22:00:00',
-  'Club Lima Nights',
-  'Barranco',
-  'Av. Grau 450',
-  120.00,
-  'https://images.unsplash.com/photo-1492684223066-81342ee5ff30',
-  800
-),
-
-(
-  'Ultra Music Lima',
-  'Festival EDM con artistas internacionales.',
-  'Festivales',
-  '2026-11-21',
-  '19:00:00',
-  'Arena Peru',
-  'Surco',
-  'Jockey Plaza',
-  380.00,
-  'https://images.unsplash.com/photo-1506157786151-b8491531f063',
-  1500
-),
-
-(
-  'Bad Bunny World Tour',
-  'Show urbano en Lima Metropolitana.',
-  'Conciertos',
-  '2026-12-05',
-  '21:00:00',
-  'Estadio Monumental',
-  'Ate',
-  'Av. Prolongacion Javier Prado',
-  320.00,
-  'https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2',
-  2000
-);
-```
-
 ---
 
 ## Instalación
@@ -300,7 +100,7 @@ Dependencias principales:
 
 ---
 
-## Ejecución
+## Ejecución Vía XAMPP
 
 Iniciar XAMPP y asegurarse de que el servicio MySQL esté activo antes de ejecutar el backend.
 
@@ -324,60 +124,20 @@ cd stay-event/client
 npm start
 ```
 
-Abrir en el navegador: `http://localhost:3000`
+## Ejecución Vía Docker Desktop
 
----
+Con Docker Desktop abierto, y un archivo `.env` en la raíz del proyecto con las variables `DB_ROOT_PASSWORD`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET` y `JWT_EXPIRES_IN`, ejecutar desde la raíz del proyecto:
 
-## Endpoints de la API
-
-Base URL: `http://localhost:5000/api`
-
-| Método | Ruta | Auth | Descripción |
-|---|---|---|---|
-| POST | `/auth/register` | No | Registra un nuevo usuario |
-| POST | `/auth/login` | No | Inicia sesión y devuelve el token |
-| GET | `/auth/me` | Bearer token | Devuelve el perfil del usuario activo |
-| GET | `/health` | No | Verifica que el servidor esté funcionando |
-
-### Ejemplo de respuesta — login exitoso
-
-```json
-{
-  "mensaje": "Inicio de sesión exitoso.",
-  "token": "<jwt>",
-  "usuario": {
-    "id": 1,
-    "nombre": "Juan",
-    "apellido": "Pérez",
-    "email": "juan@ejemplo.com",
-    "rol": "usuario"
-  }
-}
+```bash
+docker compose up
 ```
+Esto levanta automáticamente los siguientes servicios:
 
----
-
-## Roles del sistema
-
-| Rol | Ruta tras el login |
+| Servicio | Puerto |
 |---|---|
-| `admin` | `/admin` |
-| `usuario` | `/usuario` |
-| `organizador` | `/organizador` |
+| Frontend | 3000 |
+| Backend | 5000 |
+| MySQL | 3306 |
+| phpMyAdmin | 8080 |
 
-Los roles se asignan directamente en la base de datos. El registro público siempre crea usuarios con rol `usuario`.
-
----
-
-## Variables de entorno — referencia completa
-
-| Variable | Descripción | Valor de ejemplo |
-|---|---|---|
-| `DB_HOST` | Host de la base de datos | `localhost` |
-| `DB_USER` | Usuario de MySQL | `root` |
-| `DB_PASSWORD` | Contraseña de MySQL | _(vacío en XAMPP por defecto)_ |
-| `DB_NAME` | Nombre de la base de datos | `stay_event` |
-| `DB_PORT` | Puerto de MySQL | `3306` |
-| `JWT_SECRET` | Clave secreta para firmar tokens | cadena larga y aleatoria |
-| `JWT_EXPIRES_IN` | Tiempo de expiración del token | `7d` |
-| `PORT` | Puerto del servidor backend | `5000` |
+Abrir en el navegador: `http://localhost:3000`

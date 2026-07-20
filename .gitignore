@@ -25,3 +25,6 @@ yarn-error.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# Resultados crudos de k6 (contienen la IP real de la infraestructura de prueba)
+pruebas-k6/*-resultados.json

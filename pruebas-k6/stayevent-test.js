@@ -9,18 +9,18 @@ import { check, sleep } from 'k6';
 
 export const options = {
     stages: [
-        { duration: '15s', target: 10 },   // Subida muy moderada para no activar el Rate Limit de golpe
-        { duration: '20s', target: 20 },   // Estabiliza en 20 usuarios simulados
-        { duration: '15s', target: 0 },    // Bajada progresiva a 0
+        { duration: '15s', target: 10 },   // subida moderada para no activar el Rate Limit de golpe
+        { duration: '20s', target: 20 },
+        { duration: '15s', target: 0 },
     ],
     thresholds: {
-        http_req_failed: ['rate<0.10'],           // Tolerancia del 10% por posibles bloqueos del Rate Limit
-        http_req_duration: ['p(95)<3000'],        // El 95% de las respuestas en menos de 3s (se usa render, ojo con eso)
+        http_req_failed: ['rate<0.10'],
+        http_req_duration: ['p(95)<3000'],
     },
 };
 
-const FRONTEND = __ENV.FRONTEND_URL || 'https://stayevent-client.onrender.com';
-const BACKEND = __ENV.BACKEND_URL || 'https://stayevent-backend.onrender.com';
+const FRONTEND = __ENV.FRONTEND_URL || 'aca va el link de la URL para probar';
+const BACKEND = __ENV.BACKEND_URL || 'aca va el link de la URL para probar';
 
 export default function () {
 
@@ -34,7 +34,6 @@ export default function () {
 
     sleep(1);
 
-    // carga pantalla principal
     const home = http.get(`${FRONTEND}/`, {
         tags: { endpoint: 'frontend', action: 'home' },
     });
@@ -44,7 +43,6 @@ export default function () {
 
     sleep(1);
 
-    // obtener lista de eventos
     const apiEventos = http.get(`${BACKEND}/api/eventos`, {
         tags: { endpoint: 'backend', action: 'listEventos' },
     });
@@ -65,8 +63,8 @@ $env:K6_WEB_DASHBOARD="true"
 $env:K6_WEB_DASHBOARD_EXPORT="reporte-stayevent-login.html"
 
 # le pasamos las urls
-$env:FRONTEND_URL="https://stayevent-client.onrender.com"
-$env:BACKEND_URL="https://stayevent-backend.onrender.com"
+$env:FRONTEND_URL="aca va el link de la URL para probar"
+$env:BACKEND_URL="aca va el link de la URL para probar"
 
 # ejecutar ks
 k6 run archivo.js , obviamente lo cambian según el presente archivo.

@@ -8,31 +8,29 @@ import { check, sleep } from 'k6';
 
 export const options = {
     stages: [
-        { duration: '15s', target: 10 },   // Sube gradualmente a 10 usuarios
-        { duration: '30s', target: 25 },   // Sube a 25 usuarios
-        { duration: '1m', target: 45 },    // Sube hasta 45 usuarios
-        { duration: '1m', target: 45 },    // Mantiene 45 usuarios estables
-        { duration: '30s', target: 0 },    // Baja progresivamente a 0
+        { duration: '15s', target: 10 },
+        { duration: '30s', target: 25 },
+        { duration: '1m', target: 45 },
+        { duration: '1m', target: 45 },
+        { duration: '30s', target: 0 },
     ],
     thresholds: {
-        http_req_failed: ['rate<0.10'],                         // 10% de tolerancia por posibles bloqueos de Rate 
-        http_req_duration: ['p(95)<3000'],                      // 95% de requests bajo 3 segundos
+        http_req_failed: ['rate<0.10'],
+        http_req_duration: ['p(95)<3000'],
         'http_req_duration{endpoint:login}': ['p(95)<3000'],
         'http_req_duration{endpoint:profile}': ['p(95)<2000'],
     },
 };
 
-// URLs
-const FRONTEND = __ENV.FRONTEND_URL || 'https://stayevent-client.onrender.com';
-const BACKEND = __ENV.BACKEND_URL || 'https://stayevent-backend.onrender.com';
+const FRONTEND = __ENV.FRONTEND_URL || 'aca va el link de la URL para probar';
+const BACKEND = __ENV.BACKEND_URL || 'aca va el link de la URL para probar';
 
 const ADMIN_CREDENTIALS = {
-    email: 'aayat@admin.com',
-    password: 'aayat123$',
+    email: 'Escribir aqui una credencial verdadera para testear',
+    password: 'Escribir aqui una credencial verdadera para testear',
 };
 
 export default function () {
-    // carga de la pantalla principal
     const home = http.get(`${FRONTEND}/`, {
         tags: { endpoint: 'frontend', action: 'home' },
     });
@@ -42,7 +40,6 @@ export default function () {
 
     sleep(1);
 
-    // iniciando sesión
     const loginPayload = JSON.stringify({
         email: ADMIN_CREDENTIALS.email,
         password: ADMIN_CREDENTIALS.password,
@@ -79,7 +76,6 @@ export default function () {
 
     sleep(1);
 
-    // solo si fue exitoso el login
     if (loginSuccess && token) {
         const profileParams = {
             headers: {
@@ -101,7 +97,6 @@ export default function () {
 
         sleep(1);
 
-        // obteniendo lista de eventos
         const eventosAutenticado = http.get(`${BACKEND}/api/eventos`, {
             headers: {
                 'Authorization': `Bearer ${token}`,
